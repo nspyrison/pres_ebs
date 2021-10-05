@@ -1,0 +1,42 @@
+// Create your own .css functions, like there for changing body text:
+.larger {font-size: 120%}
+.smaller {font-size: 80%}
+.center {
+  text-align: center;
+}
+
+/* Two-column layout */
+.left-column {
+  width: 20%;
+  height: 92%;
+  float: left;
+}
+.left-column h2, .left-column h3 {
+  color: #586e75;
+}
+.left-column h2:last-of-type, .left-column h3:last-child {
+  color: #93a1a1;
+}
+.right-column {
+  width: 75%;
+  float: right;
+  padding-top: 1em;
+}
+.pull-left {
+  float: left;
+  width: 47%;
+}
+.pull-right {
+  float: right;
+  width: 47%;
+}
+.pull-right ~ * {
+  clear: both;
+}
+img, video, iframe {
+  max-width: 100%;
+}
+blockquote {
+  border-left: solid 5px #cb4b16;
+  padding-left: 1em;
+}

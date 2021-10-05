@@ -1,0 +1,66 @@
+---
+title: "linear projection figure"
+author: "Nick Spyrison"
+date: "9/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+require("spinifex")
+require("ggplot2")
+
+dat <- scale_01(penguins[,1:4])
+colnames(dat)
+
+clas <- penguins[,5L]
+bas <- basis_olda(dat, class = clas)
+
+#round(dat, 2)
+round(bas, 2)
+```
+$$
+\text{data, } X_{n \times p} \\
+\begin{array}{  l | l | l | l  }
+	bill\_length\_mm & bill\_depth\_mm & flipper\_length\_mm & body\_mass\_g \\ \hline
+	x_{1,1} & x_{1,2} & x_{1,3} & x_{1,4} \\ \hline
+		x_{2,1} & x_{2,2} & x_{2,3} & x_{2,4} \\ \hline
+		x_{3,1} & x_{3,2} & x_{3,3} & x_{3,4} \\ \hline
+	\vdots & \vdots & \vdots & \vdots\\ \hline
+	x_{n,1} & x_{n,2} & x_{n,3} & x_{n,4} \\
+\end{array}
+$$
+
+$$
+\text{basis, } A_{p \times d} \\
+\begin{array}{  l | l | l  }
+	&a_1 & a_2 \  \\ \hline
+	bill\_length\_mm & 0.19 & 0.89 \\ \hline
+	bill\_depth\_mm & -0.76 & -.022 \\ \hline
+	flipper\_length\_mm & 0.44 & .024 \\ \hline
+	body\_mass\_g & 0.44 & -0.44 \\
+\end{array}
+$$
+## R Markdown
+
+$\text{axes directions (basis)}$
+```{r, echo=FALSE}
+## axes direction
+ggtour(bas, dat) + proto_basis()
+```
+
+$\text{projection, } Y_{n\times d} = XA$
+```{r, echo=FALSE}
+require("latex2exp")
+## data space
+ggtour(bas, dat) + proto_point(aes_args = list(color=clas, shape=clas)) +
+  theme_bw() +
+  theme(legend.position = "off",
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        aspect.ratio = 1L) +
+  labs(x=TeX("$y_1$"), y=TeX("$y_2$"))
+```
+
+
