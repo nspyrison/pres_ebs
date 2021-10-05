@@ -216,11 +216,11 @@ Slides -- [github.com/nspyrison/mi2_talk/](github.com/nspyrison/mi2_talk/)
 
 Background in statistics using R
 
-- **variable** over attribute, column, dimension
-- **observation** over item
-- Grammar of Graphics & {ggplot2}, _esp_.:
-    - "geom"-etric character used in a visual
-    - "aesthetic" encode a variable to an alternative channel (color, size, etc.)
+- *variable* over attribute, column, dimension
+- *observation* over item
+- Grammar of Graphics & {ggplot2}, _esp_.
+    - *geom*-etric character used in a visual
+    - *aesthetic* encode a variable to an alternative channel (color, size, etc.)
 - Projection over embedding
 
 <br>
@@ -237,18 +237,13 @@ Background in statistics using R
 Three sections:
 
 - Multivariate data visualization
-- Linear projections & tours
+- tours
 - application of radial tours to local explanations, {cheem}
 
 ---
 class: transition
 
 ## Multivariate data visualization
-
-\- Motivation<br>
-\- Context - Data types<br>
-\- Scope - Channel encodings<br>
-\- The Problem<br>
 
 ---
 
@@ -261,6 +256,7 @@ knitr::include_graphics("./figures/anscombe_1of2.PNG")
 ```
 
 ---
+count: false
 
 ## Motivation
 
@@ -344,8 +340,9 @@ X <- dat[, 1:4]
 Y1 <- dat$species
 GGally::ggpairs(
   X, upper = "blank",
-  mapping = ggplot2::aes(color = Y1, shape = Y1)) + 
-  theme_bw()
+  mapping = ggplot2::aes(color = Y1, shape = Y1)) +
+  theme_bw() + 
+  scale_color_brewer(palette = "Dark2")
 ```
 `GGally::ggpairs(...)`
 
@@ -359,25 +356,26 @@ GGally::ggpairs(
 ```{r eval=T, echo=F, out.width='50%'}
 GGally::ggparcoord(
   dat, columns = c(1:4), groupColumn = 5) +
-  theme_bw()
+  theme_bw() + 
+  scale_color_brewer(palette = "Dark2")
 ```
 `GGally::ggparcoord(...)`
 
-- Asymmetry accross the order of the variables
-- scalability?
+- Asymmetric across variable order
+- Scalability?
 - Correlation is harder to see
 
 ---
 
 ## Dimension notation & terminology
 
-$p$ the number of variables ("dimensionality") of the input space, our Xs
+$p$ the dimensionality of input space
 
-Let $d$ the number of variables of the output space, our Ys
+Let $d$ the dimensionality of output space
 
 __Caveat:__
 
-- Often times our data collection is not efficient in capturing the Intrinsic Data Dimensions (idd); be careful when $p>idd$
+- Often times our data collection is not efficient in capturing the Intrinsic Data Dimensionality (idd); be careful when $p>idd$
     - A Pyschology survey asking 100 questions about Big Five Personality Traits
     - `DALEX::fifa` 35+ skill measurements, the idd is closer to 8-9
 
@@ -404,22 +402,61 @@ __Caveat:__
 
 ---
 
+## Nonlinear projections
+
+Good news; you are already familiar with (p=3, d=2) non-linear projections!
+
+```{r}
+knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
+```
+*[wikipedia - Map projections](https://en.wikipedia.org/wiki/Map_projection)*
+
+- Inconsistent space: hard to explain & interpret
+- Many methods to distort, many hyperparmeters; how faithful is the approximation?
+- “All non-linear projections are wrong, but some are useful.”
+    - Anatasios Panagiotelis, NUMBAT Seminar, 04/20/2020
+    
+<!-- (borrowing George Box’s -->
+<!-- quote about models) -->
+
+---
+class: transition
+
+## Linear projections & data vis _tours_
+
+---
+
+
+## Linear projections, intuition
+
+You are already familiar with (p=3, d=2) linear projections!
+
+```{r eval=T, echo=F, out.width='100%'}
+knitr::include_graphics("./figures/intuition_linear_proj.PNG")
+```
+
+---
+
 ## Linear projections
 
+```{r eval=T, echo=F, out.width='75%'}
+knitr::include_graphics("./figures/linear_proj.png")
+```
 
+Notice how much the species separate when look at them head on with oLDA compared with any frame of SPLOM
 
-
+--
 __Caveat:__
 
 - Often times our output space is of the same dimensionality as our input space
     - PCA returns a $pxp$ matrix, an alternative orientation for the origin
     - The reduction happens when approximate the full space with fewer components, often involving guided, but _subjective_ selection.
 
-
 ---
-class: transition
 
-## RO#2, User study
+## Tours
+
+Traditionally, we look at 2 discrete components or combinations of a reduced space....
 
 ---
 
