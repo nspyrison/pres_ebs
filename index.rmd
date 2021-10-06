@@ -216,12 +216,10 @@ Slides -- [github.com/nspyrison/mi2_talk/](github.com/nspyrison/mi2_talk/)
 
 Background in statistics using R
 
-- *variable* over attribute, column, dimension
-- *observation* over item
-- Grammar of Graphics & {ggplot2}, _esp_.
-    - *geom*-etric character used in a visual
-    - *aesthetic* encode a variable to an alternative channel (color, size, etc.)
-- Projection over embedding
+- *Variable* over attribute, column, measure
+- *Observation* over item
+- R, Grammar of Graphics, & {ggplot2}
+- *Projection* over embedding
 
 <br>
 ## Etiquette
@@ -237,8 +235,8 @@ Background in statistics using R
 Three sections:
 
 - Multivariate data visualization
-- tours
-- application of radial tours to local explanations, {cheem}
+- Linear projections & tours
+- Application of radial tours to local explanations, {cheem}
 
 ---
 class: transition
@@ -317,11 +315,17 @@ knitr::include_graphics("./figures/munzner_channels.PNG")
 --
 <br>4) Dimension reduction & projects
 
+<br>__Caveat:__
+
+- Precluded observation based visuals; _eg._ pixel-based, Chernoff faces
+    - Don't use position 
+    - May consider when few $n<<p$
+
 ---
 
 ## Example data -- Palmer penguins
 
-- Penguins on 3 islands in Antarctica.
+- Penguins on 3 islands in Antarctica
 - 330 Observations
 - 4 physical measurements, our X's
 - 1 categorical classes species, our Y & aesthetic
@@ -338,9 +342,8 @@ knitr::kable(head(dat), format = 'html')
 ```{r eval=T, echo=F, out.width='50%'}
 X <- dat[, 1:4]
 Y1 <- dat$species
-GGally::ggpairs(
-  X, upper = "blank",
-  mapping = ggplot2::aes(color = Y1, shape = Y1)) +
+GGally::ggpairs(X, upper = "blank",
+                mapping = ggplot2::aes(color = Y1, shape = Y1)) +
   theme_bw() + 
   scale_color_brewer(palette = "Dark2")
 ```
@@ -357,7 +360,7 @@ GGally::ggpairs(
 GGally::ggparcoord(
   dat, columns = c(1:4), groupColumn = 5) +
   theme_bw() + 
-  scale_color_brewer(palette = "Dark2")
+  scale_color_brewer(palette = "Dark2") + labs(x="", y="")
 ```
 `GGally::ggparcoord(...)`
 
@@ -369,13 +372,14 @@ GGally::ggparcoord(
 
 ## Dimension notation & terminology
 
-$p$ the dimensionality of input space
+$p$ is the dimensionality of input space
 
 Let $d$ the dimensionality of output space
 
 __Caveat:__
 
-- Often times our data collection is not efficient in capturing the Intrinsic Data Dimensionality (idd); be careful when $p>idd$
+- Intrinsic Data Dimensionality (idd) is an estimation of the dimensionality of the data; _eg._ a piece of paper exists in 3D, most of the time thickness is discarded.
+- Be careful when $p>idd$
     - A Pyschology survey asking 100 questions about Big Five Personality Traits
     - `DALEX::fifa` 35+ skill measurements, the idd is closer to 8-9
 
@@ -454,9 +458,19 @@ __Caveat:__
 
 ---
 
+## Linear projections, traditional approch
+
+1) Scale each variable to [0, 1] or by standard deviations away from the mean.
+2) Some people 'Whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified
+3) If $p$ is sizable, say more than 10, embed the variables in fewer components, typically by eyeballing an elbow in a scree plot
+    - "We capture 90% of the variation of our 20 variable in the first 5 principal components"
+4) Visualize with data- or component- space with scatterplot matrix, _etc._
+
+---
+
 ## Tours
 
-Traditionally, we look at 2 discrete components or combinations of a reduced space....
+
 
 ---
 
