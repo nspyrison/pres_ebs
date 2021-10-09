@@ -37,7 +37,7 @@ output:
         touch: true
         click: false
       ratio: '16:9'
-editor_options: 
+editor_options:
   chunk_output_type: console
 ---
 
@@ -71,6 +71,7 @@ require("magrittr")
 ## for cheem stuff:
 require("plotly")
 require("spinifex")
+require("tourr")
 require("cheem")
 load("./R/2preprocess_simulation.RData")
 shap_obs <- 18L; comp_obs <- 111L;
@@ -164,7 +165,7 @@ THIS_linked_plotly_func <- function(
 linked_plotly <- THIS_linked_plotly_func(
   layer_ls, shap_obs, comp_obs,
   do_include_maha_qq = FALSE) %>%
-  ggplotly(tooltip = "tooltip") %>%
+  ggplotly(tooltip = "tooltip") %>% #, width = 960, height = 480) %>%
   config(displayModeBar = FALSE) %>% ## Remove html buttons
   layout(dragmode = "select", showlegend = FALSE) %>% 
   event_register("plotly_selected") %>%
@@ -186,7 +187,8 @@ ggt142 <- radial_cheem_ggtour(
   pcp_shape = c(142, 124), ## '|' plotly and gganimate respectively
   angle = .08)
 
-rt_anim <- animate_plotly(ggt142) %>% layout(dragmode = FALSE, showlegend = FALSE) %>% ## Set drag left mouse
+rt_anim <- animate_plotly(ggt142) %>% 
+  layout(dragmode = FALSE, showlegend = FALSE) %>% ## Set drag left mouse
   event_register("plotly_selected") %>% ## Reflect "selected", on release of the mouse button.
   highlight(on = "plotly_selected", off = "plotly_deselect")
 ```
@@ -212,7 +214,7 @@ Slides -- [github.com/nspyrison/mi2_talk/](github.com/nspyrison/mi2_talk/)
 
 ---
 
-## Terminology
+# Terminology
 
 Background in statistics using R
 
@@ -222,20 +224,21 @@ Background in statistics using R
 - *Projection* over embedding
 
 <br>
-## Etiquette
+# Etiquette
 
 - Please unmute & interrupt for clarifications & discussion
 - Tangential or extension questions at the end, time permitting
 
 ---
 
-## Outline
+# Outline
 
 <br>
-Three sections:
+Four sections:
 
 - Multivariate data visualization
-- Linear projections & tours
+- Linear projections & _tours_
+- Local explanation of model & _SHAP_
 - Application of radial tours to local explanations, {cheem}
 
 ---
@@ -245,7 +248,7 @@ class: transition
 
 ---
 
-## Motivation
+# Motivation
 
 - Data visualization is better than numerical summarization alone
     - Imagine bivariate data with:
@@ -256,7 +259,7 @@ knitr::include_graphics("./figures/anscombe_1of2.PNG")
 ---
 count: false
 
-## Motivation
+# Motivation
 
 - Data visualization is better than numerical summarization alone
 ```{r, echo = F, out.width = '60%'}
@@ -278,7 +281,7 @@ knitr::include_graphics("./figures/anscombe_2of2.PNG")
 
 ---
 
-## Context - Data types
+# Context - Data types
 
 ```{r, echo = F, out.width = '70%'}
 knitr::include_graphics("./figures/munzner_datatypes.PNG")
@@ -290,7 +293,7 @@ knitr::include_graphics("./figures/munzner_datatypes.PNG")
 
 ---
 
-## Scope - Channel encodings
+# Scope - Channel encodings
 
 ```{r, echo = F, out.width = '70%'}
 knitr::include_graphics("./figures/munzner_channels.PNG")
@@ -301,7 +304,7 @@ knitr::include_graphics("./figures/munzner_channels.PNG")
 
 ---
 
-## The problem
+# The problem
 
 <br>Let data be $X_{n\times p}$, $n$ observations, of $p$ variables
 <br><br>**How do we optimally visualize, $p$ dimensions?**
@@ -323,7 +326,7 @@ knitr::include_graphics("./figures/munzner_channels.PNG")
 
 ---
 
-## Example data -- Palmer penguins
+# Example data -- Palmer penguins
 
 - Penguins on 3 islands in Antarctica
 - 330 Observations
@@ -337,24 +340,24 @@ knitr::kable(head(dat), format = 'html')
 
 ---
 
-## Univarite densities & scatterplot matrix.
+# Univarite densities & scatterplot matrix.
 
 ```{r eval=T, echo=F, out.width='50%'}
 X <- dat[, 1:4]
-Y1 <- dat$species
+Y <- dat$species
 GGally::ggpairs(X, upper = "blank",
-                mapping = ggplot2::aes(color = Y1, shape = Y1)) +
+                mapping = ggplot2::aes(color = Y, shape = Y)) +
   theme_bw() + 
   scale_color_brewer(palette = "Dark2")
 ```
 `GGally::ggpairs(...)`
 
 - Scalability?
-- Features in 3+ variable?
+- Structure in 3+ variables?
 
 ---
 
-## Parallel coordinate plot
+# Parallel coordinate plot
 
 ```{r eval=T, echo=F, out.width='50%'}
 GGally::ggparcoord(
@@ -364,13 +367,13 @@ GGally::ggparcoord(
 ```
 `GGally::ggparcoord(...)`
 
-- Asymmetric across variable order
 - Scalability?
-- Correlation is harder to see
+- Poor comparison across non-adjacent variables; asymmetric across variable order
+- Correlation is harder to extract
 
 ---
 
-## Dimension notation & terminology
+# Dimension notation & terminology
 
 $p$ is the dimensionality of input space
 
@@ -378,14 +381,16 @@ Let $d$ the dimensionality of output space
 
 __Caveat:__
 
-- Intrinsic Data Dimensionality (idd) is an estimation of the dimensionality of the data; _eg._ a piece of paper exists in 3D, most of the time thickness is discarded.
-- Be careful when $p>idd$
-    - A Pyschology survey asking 100 questions about Big Five Personality Traits
-    - `DALEX::fifa` 35+ skill measurements, the idd is closer to 8-9
+- Intrinsic Data Dimensionality, $idd$, is the intrinsic data  dimensionality
+    - Usually estimated with 'fractal' methods, see 18x `Rdimtools::est.*` function, or subjectively look at correlation plots for stratification
+    - _eg._ a piece of paper exists in 3D, most of the time thickness is unimportant
+- Be careful when $p>idd$:
+    - What is the dimensionality of Pyschology survey asking 100 questions about Big Five Personality Traits
+    - `DALEX::fifa` 35+ skill measurements, while $idd$ is closer to 8-9; in [triplot](https://github.com/ModelOriented/triplot) Katarzyna creates aggregated *aspects*, *after* a model fit; later I'll manual aggregate *before* the model fit
 
 ---
 
-## Dimension reduction
+# Dimension reduction
 
 **Linear**
 
@@ -394,6 +399,8 @@ __Caveat:__
     - Principal Component Analysis (PCA), oriented by variance
     - Linear Discriminant Analysis (LDA), oriented by the separation of the supervised class
     - Visualization _tours_ (next section)
+
+--
 
 **Nonlinear**
 
@@ -406,11 +413,11 @@ __Caveat:__
 
 ---
 
-## Nonlinear projections
+# Nonlinear projections
 
 Good news; you are already familiar with (p=3, d=2) non-linear projections!
 
-```{r}
+```{r, out.width='60%'}
 knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
 ```
 *[wikipedia - Map projections](https://en.wikipedia.org/wiki/Map_projection)*
@@ -418,8 +425,9 @@ knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
 - Inconsistent space: hard to explain & interpret
 - Many methods to distort, many hyperparmeters; how faithful is the approximation?
 - “All non-linear projections are wrong, but some are useful.”
-    - Anatasios Panagiotelis, NUMBAT Seminar, 04/20/2020
-    
+    - --- Anatasios Panagiotelis (play on George Box’s quote about models)
+
+<!-- quote from: NUMBAT Seminar, 04/20/2020 -->
 <!-- (borrowing George Box’s -->
 <!-- quote about models) -->
 
@@ -430,8 +438,7 @@ class: transition
 
 ---
 
-
-## Linear projections, intuition
+# Linear projections, intuition
 
 You are already familiar with (p=3, d=2) linear projections!
 
@@ -441,100 +448,126 @@ knitr::include_graphics("./figures/intuition_linear_proj.PNG")
 
 ---
 
-## Linear projections
+# Linear projections
 
-```{r eval=T, echo=F, out.width='75%'}
-knitr::include_graphics("./figures/linear_proj.png")
+<br>
+```{r eval=T, echo=F, out.width='100%'}
+knitr::include_graphics(
+  "./figures/linear_proj_wide.png")
 ```
 
+<br>
 Notice how much the species separate when look at them head on with oLDA compared with any frame of SPLOM
+<br>
 
 --
 __Caveat:__
 
 - Often times our output space is of the same dimensionality as our input space
-    - PCA returns a $pxp$ matrix, an alternative orientation for the origin
+    - PCA returns a $pxp$ matrix, an reorientation of the axes directions ordered by the variation contained in each component.
     - The reduction happens when approximate the full space with fewer components, often involving guided, but _subjective_ selection.
 
 ---
 
-## Linear projections, traditional approch
+# Linear projections, traditional approch
 
-1) Scale each variable to [0, 1] or by standard deviations away from the mean.
-2) Some people 'Whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified
-3) If $p$ is sizable, say more than 10, embed the variables in fewer components, typically by eyeballing an elbow in a scree plot
-    - "We capture 90% of the variation of our 20 variable in the first 5 principal components"
+1) Scale each variable to [0, 1] or by standard deviations away from the mean<br>
+--
+2) Some people 'Whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified<br>
+--
+3) If $p$ is sizable, say more than 10, embed the variables in fewer components, typically by eyeballing an elbow in a scree plot<br>
+    - "We approximate 90% of the variation of our 20 variable in the first 5 principal components"
+<br>
+--
 4) Visualize with data- or component- space with scatterplot matrix, _etc._
 
 ---
 
-## Tours
+# Tours
 
+- The basis is a reorientation of the dimensions, components are orthogonal
+- Instead of viewing only static orthogonal views, let's *animate* small changes in the basis over time
+    - Object permanence between frames; can see observations and cluster moving together
 
-
----
-
-.pull-left[
-## Experimental factors
-
-<br><br>
-- _factor_; visualization method
-- _location_ of separation; mix a signal and noise dimension at different ratios
-- _shape_ & orientations of the clusters
-- _dimension_-ality and number of clusters
-]
-
-.pull-right[
-```{r echo = F, out.width = '75%'}
+```{r echo = F, out.width = '50%'}
 knitr::include_graphics(
-  "./figures/study_exp_factors.png")
-```
-]
-
----
-
-## Task
-
-- Select any/all variables that contribute more than $1/p$ of the separation between the orange triangle and the green circles
-
-```{r echo = F, out.width = '80%'}
-knitr::include_graphics(
-  "./figures/figBiplotScoring.png")
+  "./figures/tour_frames.PNG")
 ```
 
 ---
 
-## Mixed regression model
+# Grand tour
+*Asimov, 1984*
 
-\begin{array}{ll}
-&\widehat{Y} = \mu + \alpha_i * \beta_j + \gamma_k + \delta_l + \textbf{Z} + \textbf{W} + \epsilon \newline
-\text{where } &\mu \text{ is the intercept of the model including the means of random effects} \newline
-&\alpha_i \text{, fixed term for factor}~|~i\in (\text{pca, grand, radial}) \newline
-&\beta_j  \text{, fixed term for location}~|~j\in (\text{0/1, 33/66, 50/50}) \text{ % noise/signal mixing} \newline
-&\gamma_k \text{, fixed term for shape}~|~k\in (\text{EEE, EEV, EVV banana}) \text{ model shapes} \newline
-&\delta_l \text{, fixed term for dimension}~|~l\in (\text{4 variables & 3 cluster, 6 var & 4 cl}) \newline
-&\textbf{Z} \sim \mathcal{N}(0,~\tau), \text{ the random effect of participant} \newline
-&\textbf{W} \sim \mathcal{N}(0,~\upsilon), \text{ the random effect of simulation} \newline
-&\epsilon   \sim \mathcal{N}(0,~\sigma), \text{ the error of the model} \newline
-\end{array}
+```{r}
+X_std <- X %>% spinifex::scale_sd()
+gt_path <- spinifex::save_history(X_std, max_bases = 6)
+
+ggt <- ggtour(gt_path, angle = .2) +
+  proto_default(list(color = Y, shape = Y))
+animate_plotly(ggt)
+```
+`tourr::grand_tour(...) %>% spinifex::ggtour(...)`
 
 ---
 
-## Results
+# Tour taxonomy
 
-```{r echo = F, out.width = '90%'}
-knitr::include_graphics(
-  "./figures/spinifex_study_y1_results.PNG")
+Defined by basis path/production:
+
+```{r}
+kableExtra::kbl(data.frame(
+  tour_type = 
+    c("grand", "guided", "manual", "local"), 
+  target_bases = c("random bases", "objective function (simulated annealing)", 
+                   "change the contribution of selected variable", "random bases within a local vacinity")))
 ```
+
+--
+
+- The grand tour is good for EDA, by has no goal/direction
+    - We can see that `flipper_length` is good at separating the purple cluster
+- Control it's contribution with a manual tour
+
+---
+
+# Manual tour
+*Cook & Buja, 1997. Spyrison & Cook, 2020*
+
+```{r}
+X_std <- X %>% spinifex::scale_sd()
+mt_path <- basis_pca(X_std) %>%
+  spinifex::manual_tour(manip_var = 3, ## "flipper_length_mm"
+                          data = X_std)
+
+ggt <- ggtour(mt_path, angle = .2) +
+  proto_basis() +
+  proto_point(list(color = Y, shape = Y))
+(animate_plotly(ggt, width = 720, height = 480))
+```
+`spinifex::manual_tour(...) %>% spinifex::ggtour(...)`
+
+
+---
+
+# Further reading on tours:
+
+Also see: [A review of State-of-the-Art on Tours](https://arxiv.org/pdf/2104.08016.pdf), prebublish WIREs paper
+
+- User interaction
+- Basis paths, as enscribed on $p-$spheres/torii
+- Slicing to explore hollowness and structure
+- Scalar Vector Machine boundaries
+- Guided tours on classification Random Forests
 
 ---
 class: transition
 
-## RO#3, Radial tour and local explanations
+## Local explanation of model & _SHAP_
 
 ---
 
-## Local explanations
+# Local explanation
 
 - Point-measurement, the variable importance to the model
 - Applied to 1 observation, given a model
@@ -547,12 +580,15 @@ knitr::include_graphics(
 
 ---
 
-.pull-left[
-## SHAP values
+# SHAP values
 
+.pull-left[
 - SHAP is a model-agnostic local explanation, we apply to random forest models
 - Approximate variable importance at one point-observation of the model; median importance, permuting over combinations of the explanatory variables
-- FIFA 2020 data, model predicting soccer player's wage from the evaluation of their skills
+- Processed FIFA 2020 data, RF model predicting soccer player's wage from the evaluation of their skills
+    - Estimated $idd$, manually & subjectively constructed 9 aggregated variables using `{corrplot}` before modeling
+
+*The model has very different variable importances across the player position*
 ]
 
 .pull-right[
@@ -565,11 +601,11 @@ knitr::include_graphics(
 ---
 class: transition
 
-## Our application, Trees of Cheem
+## Application of radial tours to local explanations, {cheem}
 
 ---
 
-## Global View
+# Global View
 
 ```{r echo = F, out.width = '100%', out.height='600px'}
 linked_plotly
@@ -578,14 +614,14 @@ linked_plotly
 ???
 
 - PC1:2 of data (left) and SHAP (right)
-- points color and shape are mapped to *predicted* cluster,
-- misclassified have red circle.
+- points color and shape are mapped to *predicted* cluster
+- misclassified have red circle
 
 ---
 
-.pull-left[
-## Radial tour
+# Radial tour
 
+.pull-left[
 - SHAP value of the selected observation, `dashed line`, (previously '*') becomes the 1D projection basis, grey/black bars
 - Other SHAP values displayed as faint parallel coordinate lines, comparison observation dotted line (previously 'x')
 <br><br>
