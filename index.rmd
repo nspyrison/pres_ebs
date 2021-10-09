@@ -499,13 +499,22 @@ knitr::include_graphics(
 # Grand tour
 *Asimov, 1984*
 
-```{r}
+```{r, echo = F, out.width = '50%'}
 X_std <- X %>% spinifex::scale_sd()
 gt_path <- spinifex::save_history(X_std, max_bases = 6)
 
 ggt <- ggtour(gt_path, angle = .2) +
   proto_default(list(color = Y, shape = Y))
-animate_plotly(ggt)
+if(F){
+  anim <- animate_gganimate(
+    ggt, options(gganimate.dev_args = list(width = 720, height = 480))
+  )
+  gganimate::anim_save("grand_tour.gif",
+                       animation = anim,
+                       path = "./figures")
+  animate_plotly(ggt)
+}
+include_graphics("./figures/grand_tour.gif")
 ```
 `tourr::grand_tour(...) %>% spinifex::ggtour(...)`
 
@@ -607,9 +616,13 @@ class: transition
 
 # Global View
 
-```{r echo = F, out.width = '100%', out.height='600px'}
-linked_plotly
+
+Top__
+```{r echo = F, out.width = '10%'}
+print(linked_plotly)
 ```
+Bottom__
+
 
 ???
 
