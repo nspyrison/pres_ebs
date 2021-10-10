@@ -280,29 +280,6 @@ knitr::include_graphics("./figures/anscombe_2of2.PNG")
 
 ---
 
-# Context - Data types
-
-```{r, out.width = '70%'}
-knitr::include_graphics("./figures/munzner_datatypes.PNG")
-```
-*Munzner, 2014*
-
-- Numerical flat tables
-- Alternatively, feature-spaces of other formats
-
----
-
-# Scope - Channel encodings
-
-```{r, out.width = '70%'}
-knitr::include_graphics("./figures/munzner_channels.PNG")
-```
-*Munzner, 2014*
-
-- Position/spatial comes out on top in either case
-
----
-
 # The problem
 
 <br>Let data be $X_{n\times p}$, $n$ observations, of $p$ variables
@@ -322,6 +299,29 @@ knitr::include_graphics("./figures/munzner_channels.PNG")
 - Precluded observation based visuals; _eg._ pixel-based, Chernoff faces
     - Don't use position 
     - May consider when few $n<<p$
+
+---
+
+# Data types
+
+```{r, out.width = '70%'}
+knitr::include_graphics("./figures/munzner_datatypes.PNG")
+```
+*Munzner, 2014*
+
+- Numerical flat tables
+- Alternatively, feature-spaces of other formats
+
+---
+
+# Channel encodings
+
+```{r, out.width = '70%'}
+knitr::include_graphics("./figures/munzner_channels.PNG")
+```
+*Munzner, 2014*
+
+- Position/spatial comes out on top in either case
 
 ---
 
@@ -370,22 +370,7 @@ GGally::ggparcoord(
 - Poor comparison across non-adjacent variables; asymmetric across variable order
 - Correlation is harder to extract
 
----
 
-# Dimension notation & terminology
-
-$p$ is the dimensionality of input space
-
-Let $d$ the dimensionality of output space
-
-<br>__Caveat:__
-
-- Intrinsic Data Dimensionality, $idd$, is the intrinsic data dimensionality
-    - Usually estimated with 'fractal' methods, see 18x `Rdimtools::est.*` function, or subjectively look at correlation plots for stratification
-    - _eg._ a piece of paper exists in 3D, most of the time thickness is unimportant
-- Be careful when $p>idd$:
-    - What is the dimensionality of Pyschology survey asking 100 questions about Big Five Personality Traits
-    - `DALEX::fifa` 35+ skill measurements, while $idd$ is closer to 8-9; in [triplot](https://github.com/ModelOriented/triplot) Katarzyna creates aggregated *aspects*, *after* a model fit; later I'll manual aggregate *before* the model fit
 
 ---
 
@@ -430,6 +415,23 @@ knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
 <!-- quote from: NUMBAT Seminar, 04/20/2020 -->
 <!-- (borrowing George Box’s -->
 <!-- quote about models) -->
+
+---
+
+# Dimension notation & terminology
+
+$p$ is the dimensionality of input space
+
+Let $d$ the dimensionality of output space
+
+<br>__Caveat:__
+
+- Intrinsic Data Dimensionality, $idd$, is the intrinsic data dimensionality
+    - Usually estimated with 'fractal' methods, see 18x `Rdimtools::est.*` function, or subjectively look at correlation plots for stratification
+    - _eg._ a piece of paper exists in 3D, most of the time thickness is unimportant
+- Be careful when $p>idd$:
+    - What is the dimensionality of Pyschology survey asking 100 questions about Big Five Personality Traits
+    - `DALEX::fifa` 35+ skill measurements, while $idd$ is closer to 8-9; in [triplot](https://github.com/ModelOriented/triplot) Katarzyna creates aggregated *aspects*, *after* a model fit; later I'll manual aggregate *before* the model fit
 
 ---
 class: transition
@@ -524,18 +526,22 @@ include_graphics("./figures/grand_tour.gif")
 
 # Tour taxonomy
 
-Defined by basis path/production:
+Distinguished by how the basis array is produced
 
 ```{r}
 kableExtra::kbl(data.frame(
-  tour_type = 
-    c("grand", "guided", "manual", "local"), 
-  target_bases = c("random bases", "objective function (simulated annealing)", 
-                   "change the contribution of selected variable", "random bases within a local vacinity")))
+  `Tour type` =
+    c("grand", "guided", "manual", "local"),
+  `Target bases` =
+    c("random bases", "objective function (simulated annealing)",
+      "change the contribution of selected variable", 
+      "random bases within a local vacinity"),
+  check.names = FALSE))
 ```
 
 --
 
+<br><br>
 - The grand tour is good for EDA, by has no goal/direction
     - We can see that `flipper_length` is good at separating the purple cluster
 - Look at it in more detail: control its contribution with a manual tour
@@ -577,19 +583,67 @@ kableExtra::kbl(data.frame(
 ))
 ```
 
-**{spinifex} (v0.3.1), ggproto api; additive {ggplot2} construction of animated tours**
-
 --
 <br><br>
 __Caveat:__
 
 - Tours needn't project to $d=2$
     - 1D density curves
-    - $d<p$ Parallel coordinate plot, chernoff faces
+    - $d<p$ Parallel coordinate plot, Chernoff faces
 
 ---
 
-# Further reading on tours
+# New {spinifex} api; ggproto
+
+.pull-left[
+```{r, echo=T,eval=F}
+require(spinfex)
+dat  <- penguins[, 1:4] %>% scale_sd()
+clas <- penguins$species
+bas  <- basis_pca(dat, d = 1)
+mt_path <- manual_tour(
+  bas, manip_var = 4) ## body_mass_g
+
+ggt <- ggtour(mt_path, dat, angle = .2) +
+  proto_basis1d() +
+  proto_density(aes_args = list(fill = clas)) +
+  proto_highlight1d(1, list(color = clas)) +
+  ggplot2::ggtitle("My 1D radial tour")
+animate_gganimate(ggt)
+```
+]
+
+.pull-right[
+```{r}
+if(F){
+  dat  <- penguins[, 1:4] %>% scale_sd()
+  clas <- penguins$species
+  bas  <- basis_pca(dat, d = 1)
+  mt_path <-
+    manual_tour(bas, manip_var = 4) ## body_mass_g
+  
+  ggt <- ggtour(mt_path, dat, angle = .2) +
+    proto_basis1d() +
+    proto_density(
+      aes_args = list(fill = clas, color = clas)) +
+    proto_highlight1d(1, list(color = clas)) +
+    ggplot2::ggtitle("My 1D radial tour")
+  options(gganimate.dev_args = list(width = 360, height = 240))
+  anim <- animate_gganimate(ggt)
+    gganimate::anim_save("manual_tour1d.gif",
+                         animation = anim,
+                         path = "./figures")
+}
+knitr::include_graphics(
+  "./figures/manual_tour1d.gif")
+```
+- `proto_*` functions return lists of `geom_*`
+- Abstract away complexity; feel like operating original data
+]
+
+---
+
+# Reading on tours
 
 Also see: [A review of State-of-the-Art on Tours, arxiv.org/pdf/2104.08016.pdf](https://arxiv.org/pdf/2104.08016.pdf), prepublished WIREs article
 
@@ -598,6 +652,7 @@ Also see: [A review of State-of-the-Art on Tours, arxiv.org/pdf/2104.08016.pdf](
 - Slicing to explore hollowness and structure
 - Scalar Vector Machine boundaries
 - Guided tours on classification Random Forests
+- Visualizing neural networks
 
 ---
 class: transition
@@ -683,7 +738,7 @@ linked_plotly
 <br><br>
 
 - Compare initial, full contribution, no contribution
-- **The misclassified point downplays the weight on V2; this discrepancy is a measure of how differently this misclassified point is, compared with its peers.**
+- **The misclassified point downplays the weight on V2; this discrepancy is a measure of how differently this misclassified point is, compared with its peers**
 ]
 
 .pull-right[
@@ -696,6 +751,7 @@ rt_anim
 
 # Demo the app
 
+<br><br><br>
 ```{r, echo=T,eval=F}
 cheem::run_app()
 ```
@@ -722,7 +778,7 @@ cheem::run_app()
 <br>
 __next steps__
 - Turning attention to regression case
-- Language and documentation generalized to agnostic of type of model or local explanation, but functions only handle {randomForest} & {treeshap} atm.
+- Language and documentation generalized to agnostic of type of model or local explanation, but functions only handle {randomForest} & {treeshap} atm
 
 ---
 
@@ -744,7 +800,8 @@ __next steps__
 - (Original implementation) on tree based models, {DALEX} ecosystem
 
 ```{r out.width="100%"}
-
+knitr::include_graphics(
+  "./figures/cheem_namesake.png")
 ```
 
 ---
