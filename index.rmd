@@ -12,7 +12,7 @@ output:
     css:
       - ninjutsu
       - "assets/font-awesome-all.css"
-      #- "assets/xaringan-themer.css"
+      ##- "assets/xaringan-themer.css"
       - "assets/tachyons-addon.css"
       - "assets/animate.css"
       - "assets/fira-code.css"
@@ -189,7 +189,7 @@ ggt142 <- radial_cheem_ggtour(
   angle = .08)
 
 rt_anim <- animate_plotly(ggt142) %>% 
-  layout(dragmode = FALSE, showlegend = FALSE) %>% ## Set drag left mouse
+  layout(dragmode = FALSE, showlegend = FALSE, width =) %>% ## Set drag left mouse
   event_register("plotly_selected") %>% ## Reflect "selected", on release of the mouse button.
   highlight(on = "plotly_selected", off = "plotly_deselect")
 ```
@@ -219,8 +219,9 @@ Background in statistics using R
 
 - *Variable* over attribute, column, measure
 - *Observation* over item
-- R, Grammar of Graphics, & {ggplot2}
 - *Projection* over embedding
+- R, Grammar of Graphics, & {ggplot2}
+
 
 <br>
 # Etiquette
@@ -233,12 +234,11 @@ Background in statistics using R
 # Outline
 
 <br>
-Four sections:
+Three sections:
 
 - Multivariate data visualization
 - Linear projections & _tours_
-- Local explanation of model & _SHAP_
-- Application of radial tours to local explanations, {cheem}
+- Local explanation of a black-box models & application of radial tours to local explanations, {cheem}
 
 ---
 class: transition
@@ -250,7 +250,7 @@ class: transition
 # Motivation
 
 - Data visualization is better than numerical summarization alone
-    - Imagine bivariate data with:
+    - What would this 2D scatterplot look like?
 ```{r, out.width = '100%'}
 knitr::include_graphics("./figures/anscombe_1of2.PNG")
 ```
@@ -272,33 +272,11 @@ knitr::include_graphics("./figures/anscombe_2of2.PNG")
 <!-- Eureka data *Coleman, 1986* \\ -->
 --
 
-- Data visualization preprocesses the cognitive work, allowing your audience to better internalize the evidence.
+- Data visualization preprocesses the cognitive work, allowing your audience to better internalize the evidence *Munzner, 2014*
 - Important for validating assumption & exploratory data analysis
 - Ideally *data*-space rather than *feature*-space
     - *ie. Prefer to visualize X's directly rather than features of X's*
 *Wickham, 2015*
-
----
-
-# The problem
-
-<br>Let data be $X_{n\times p}$, $n$ observations, of $p$ variables
-<br><br>**How do we optimally visualize, $p$ dimensions?**
-<br>
-
---
-
-<br>1) $p$ univariate histograms/densities curves
-<br>2) Scatterplot matrices (SPLOM), $p-1$ factorial 2d scatter plots
-<br>3) Parallel coordinate plot
-<br>4) Dimension reduction & projects
-
---
-<br><br>__Caveat:__
-
-- Precluded observation based visuals; _eg._ pixel-based, Chernoff faces
-    - Don't use position 
-    - May consider when few $n<<p$
 
 ---
 
@@ -325,15 +303,37 @@ knitr::include_graphics("./figures/munzner_channels.PNG")
 
 ---
 
+# The problem
+
+<br>Let data be $X_{n\times p}$, $n$ observations, of $p$ variables
+<br><br>**How do we optimally visualize, $p$ dimensions?**
+<br>
+
+--
+
+<br>1) $p$ univariate histograms/densities curves
+<br>2) Scatterplot matrices (SPLOM), $p-1$ factorial 2d scatter plots
+<br>3) Parallel coordinate plot
+<br>4) Dimension reduction & projections
+
+--
+<br><br>__Caveat:__
+
+- Precluded observation based visuals; _eg._ pixel-based, Chernoff faces
+    - Don't use position
+    - May consider when few $n<<p$
+
+---
+
 # Example data -- Palmer penguins
 
-- Penguins on 3 islands in Antarctica
+- Penguins in Antarctica
 - 330 Observations
 - 4 physical measurements, our X's
-- 1 categorical classes species, our Y & aesthetic
+- 1 categorical class, species, our Y & aesthetic
 
 ```{r}
-dat <- spinifex::penguins[, 1:6]
+dat <- spinifex::penguins[, 1:5]
 knitr::kable(head(dat), format = 'html')
 ```
 
@@ -346,7 +346,7 @@ X <- dat[, 1:4]
 Y <- dat$species
 GGally::ggpairs(X, upper = "blank",
                 mapping = ggplot2::aes(color = Y, shape = Y)) +
-  theme_bw() + 
+  theme_bw() +
   scale_color_brewer(palette = "Dark2")
 ```
 `GGally::ggpairs(...)`
@@ -369,8 +369,6 @@ GGally::ggparcoord(
 - Scalability?
 - Poor comparison across non-adjacent variables; asymmetric across variable order
 - Correlation is harder to extract
-
-
 
 ---
 
@@ -406,8 +404,8 @@ knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
 ```
 *[wikipedia - Map projections](https://en.wikipedia.org/wiki/Map_projection)*
 
-- Inconsistent space: hard to explain & interpret
-- Many methods to distort, many hyperparmeters; how faithful is the approximation?
+- Many methods, many hyperparmeters; how *faithful* is the approximation?
+- Inconsistent space; hard to explain & interpret
 
 “All non-linear projections are wrong, but some are useful.”
 <br>--- Anatasios Panagiotelis (play on George Box’s quote about models)
@@ -426,12 +424,12 @@ Let $d$ the dimensionality of output space
 
 <br>__Caveat:__
 
-- Intrinsic Data Dimensionality, $idd$, is the intrinsic data dimensionality
-    - Usually estimated with 'fractal' methods, see 18x `Rdimtools::est.*` function, or subjectively look at correlation plots for stratification
-    - _eg._ a piece of paper exists in 3D, most of the time thickness is unimportant
-- Be careful when $p>idd$:
+- Intrinsic Data Dimensionality, $idd$, number of variables needed in a minimal representation of the data
+    - Usually estimated with 'fractal' methods, `Rdimtools::est.*` function, or *subjectively* look at correlation plots
+    - _eg._ a piece of paper exists in 3D though use 2D is usual sufficient
+- Use caution $p>idd$:
     - What is the dimensionality of Pyschology survey asking 100 questions about Big Five Personality Traits
-    - `DALEX::fifa` 35+ skill measurements, while $idd$ is closer to 8-9; in [triplot](https://github.com/ModelOriented/triplot) Katarzyna creates aggregated *aspects*, *after* a model fit; later I'll manual aggregate *before* the model fit
+    - `DALEX::fifa` 35+ skill measurements, while $idd$ is closer to 8-9; in [triplot](https://github.com/ModelOriented/triplot) Katarzyna creates aggregated 'aspects', *after* a model fit; later I'll manual aggregate *before* the model fit
 
 ---
 class: transition
@@ -449,7 +447,7 @@ knitr::include_graphics("./figures/intuition_linear_proj.PNG")
 ```
 
 - Not all orientations hold interesting structure
-- Watching only the shadow, how would you explore an unknown object? 
+- Watching only the shadow, how would you explore an unknown object?
 
 ---
 
@@ -476,12 +474,15 @@ __Caveat:__
 
 # Linear projections, traditional approch
 
+<br><br>
 1) Scale each variable to [0, 1] or by standard deviations away from the mean<br>
 2) Some people 'Whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified<br>
 3) If $p$ is sizable, say more than 10, embed the variables in fewer components, typically by eyeballing an elbow in a scree plot<br>
-    - "We approximate 90% of the variation of our 20 variable in the first 5 principal components"
-<br>
+    - "We approximate 90% of the variation of our 20 variable in the first 5 principal components"<br>
 4) Visualize with data- or component- space with scatterplot matrix, _etc._
+
+<br><br>
+**Static, discrete, and orthogonal views ("face-on" & 90 degrees apart)**
 
 ---
 
@@ -657,7 +658,7 @@ Also see: [A review of State-of-the-Art on Tours, arxiv.org/pdf/2104.08016.pdf](
 ---
 class: transition
 
-## Local explanation of a model & _SHAP_
+## Local explanation of a black-box models & application of radial tours to local explanations, {cheem}
 
 ---
 
@@ -677,10 +678,10 @@ knitr::include_graphics(
 .pull-left[
 # SHAP values
 
-- SHAP is a model-agnostic local explanation, we apply to random forest models
-- Approximate variable importance at one point-observation of the model; median importance, permuting over combinations of the explanatory variables
-- Processed FIFA 2020 data, RF model predicting soccer player's wage from the evaluation of their skills
-    - Estimated $idd$, manually & subjectively constructed 9 aggregated variables using `{corrplot}` before modeling
+- FIFA 2020 data, 5000 observations, ~35 skill measurements aggregated to 9 variables, Y: wages
+- Model: Random forest, regress wages given 9 skill measurements
+- SHAP is a model-agnostic local explanation
+- Approximate linear variable importance at one observation; the median importance, permuting over combinations of the explanatory variables
 
 **The model has very different variable importances across the player position**
 ]
@@ -702,13 +703,13 @@ class: transition
 # Data & preprocessing
 
 - Synthetic data, 3 spherical clusters at the points of a triangle
-- 420 obersvations, 4 variables (2 signal, 2 noise)
-- {randomForest} model predicting cluster membership
-- Extract the SHAP values from *each* observation using {treeshap}, Konrad _et al._ 
+- 420 observations, 4 variables (2 signal, 2 noise)
+- Fit a {randomForest} model predicting cluster
+- Extract the SHAP values from *each* observation using {treeshap}, Konrad _et al._
 
 --
-<br><br>
-__Explore__
+
+# Explore, interactive {shiny} app
 
 <br>1) View the data- and SHAP-space with their first two principal components
 <br>2) Select a primary and comparison point, typically misclassified and neighboring correctly classified
@@ -725,16 +726,16 @@ linked_plotly
 ???
 
 - PC1:2 of data (left) and SHAP (right)
-- points color and shape are mapped to *predicted* cluster
-- misclassified have red circle
+- Points color and shape are mapped to *predicted* cluster
+- Misclassified have red circle
 
 ---
 
 .pull-left[
 # Radial tour
 
-- SHAP value of the selected observation, `dashed line`, (previously '*') becomes the 1D projection basis, grey/black bars
-- Other SHAP values displayed as faint parallel coordinate lines, comparison observation dotted line (previously 'x')
+- SHAP value of the selected observation, dashed line
+- Other SHAP values displayed as faint parallel coordinate lines, comparison observation dotted line
 <br><br>
 
 - Compare initial, full contribution, no contribution
@@ -766,27 +767,24 @@ cheem::run_app()
 
 --
 <br>
-**deployment**
+
+- See a hosted shiny app at: [ebsmonash.shinyapps.io/cheem_initial/](https://ebsmonash.shinyapps.io/cheem_initial/)
 - {cheem} is now in (maturing) package format [github.com/nspyrison/cheem](https://github.com/nspyrison/cheem)
+
 ```
 remotes::install_github("nspyrison/cheem")
 cheem::run_app()
 ```
-- Alternatively, see a hosted shiny app at: [ebsmonash.shinyapps.io/cheem_initial/](https://ebsmonash.shinyapps.io/cheem_initial/)
 
---
-<br>
-__next steps__
 - Turning attention to regression case
-- Language and documentation generalized to agnostic of type of model or local explanation, but functions only handle {randomForest} & {treeshap} atm
 
 ---
 
 # Possible extensions
 
-- {cheem}; extend types of models and local explanations 
+- {cheem}; extend types of models and local explanations
 - {spinifex}; extending `proto_*` from different `geom_*`
-- {cheem} & {spinifex}; perfromant rendering & shiny apps?
+- {cheem} & {spinifex}; more perfromant rendering & shiny apps?
 - Tour multivariate time series; animate over vary lags/lead, vary the basis of index
 - Tours in AR/VR displaying 3D scatterplot rather than 2D projections
 - Consolidated interactive tour application
@@ -799,9 +797,9 @@ __next steps__
 - The Trees of Cheem are a fictional race of bipedal trees from the Dr. Who universe
 - (Original implementation) on tree based models, {DALEX} ecosystem
 
-```{r out.width="100%"}
+```{r out.width='60%'}
 knitr::include_graphics(
-  "./figures/cheem_namesake.png")
+  "./figures/cheem.jfif")
 ```
 
 ---
@@ -809,7 +807,7 @@ knitr::include_graphics(
 # Acknowledgments
 
 <br><br>
-Thanks to Professor Przemyslaw Biecek for his time and input suggesting SHAP and FIFA in addition to the `{DALEX}` package eco-system and *Exploratory Model Analysis* book
+Thanks to Professor Przemyslaw Biecek for his time and input suggesting SHAP and FIFA, in addition to the `{DALEX}` package ecosystem and *Exploratory Model Analysis* book
 
 <br>
 Thanks to Di Cook and Kim Marriott for their supervision
