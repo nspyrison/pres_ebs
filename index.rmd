@@ -188,9 +188,11 @@ ggt142 <- radial_cheem_ggtour(
   pcp_shape = c(142, 124), ## '|' plotly and gganimate respectively
   angle = .08)
 
-rt_anim <- animate_plotly(ggt142) %>% 
-  layout(dragmode = FALSE, showlegend = FALSE, width =) %>% ## Set drag left mouse
-  event_register("plotly_selected") %>% ## Reflect "selected", on release of the mouse button.
+rt_anim <- animate_plotly(ggt142) %>%
+  layout(dragmode = FALSE, showlegend = FALSE) %>%
+  ## Set drag left mouse
+  event_register("plotly_selected") %>%
+  ## Reflect "selected", on release of the mouse button.
   highlight(on = "plotly_selected", off = "plotly_deselect")
 ```
 
@@ -208,7 +210,7 @@ Presenter: *`r rmarkdown::metadata$author`* <br>
 `r rmarkdown::metadata$email` <br>
 `r rmarkdown::metadata$date` <br><br>
 Slides -- `r rmarkdown::metadata$slides`
-[github.com/nspyrison/mi2_talk/](github.com/nspyrison/mi2_talk/)
+[nspyrison.github.io/mi2_talk](https://nspyrison.github.io/mi2_talk/#1)
 ]
 
 ---
@@ -831,5 +833,5 @@ Presenter: *`r rmarkdown::metadata$author`* <br>
 `r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$email` <br>
 `r rmarkdown::metadata$date` <br><br>
-Slides -- [github.com/nspyrison/mi2_talk/](github.com/nspyrison/mi2_talk/)
+Slides -- [nspyrison.github.io/mi2_talk](https://nspyrison.github.io/mi2_talk/#1)
 ]
