@@ -65,6 +65,7 @@ require("cheem")
 
 have tried changing reulst knitr chunk opts...
 
+set up gh-pages
 
 TOP___
 ```{r echo=F, out.width='10%'}
