@@ -1,5 +1,5 @@
 ---
-title: "Multivariate data vis, Linear projections, and their application to local explanations of models"
+title: "Multivariate data vis, dynamic linear projection, and their application to local explanations of models"
 subtitle: "MI2 DataLab"
 author: "Nicholas Spyrison"
 length: "45 minutes"
@@ -217,13 +217,12 @@ Slides -- `r rmarkdown::metadata$slides`
 
 # Terminology
 
-Background in statistics using R
+Background: statistics and R
 
 - *Variable* over attribute, column, measure
 - *Observation* over item
 - *Projection* over embedding
 - R, Grammar of Graphics, & {ggplot2}
-
 
 <br>
 # Etiquette
@@ -274,11 +273,10 @@ knitr::include_graphics("./figures/anscombe_2of2.PNG")
 <!-- Eureka data *Coleman, 1986* \\ -->
 --
 
-- Data visualization preprocesses the cognitive work, allowing your audience to better internalize the evidence *Munzner, 2014*
 - Important for validating assumption & exploratory data analysis
-- Ideally *data*-space rather than *feature*-space
+- Data visualization preprocesses the cognitive work, allowing the audience to better internalize the evidence *Munzner, 2014*
+- Ideally *data*-space rather than *feature*-space *Wickham, 2015*
     - *ie. Prefer to visualize X's directly rather than features of X's*
-*Wickham, 2015*
 
 ---
 
@@ -399,15 +397,15 @@ GGally::ggparcoord(
 
 # Nonlinear projections
 
-Good news; you are already familiar with (p=3, d=2) non-linear projections!
+Good news; you are already familiar with ($p=3, d=2$) non-linear projections!
 
 ```{r, out.width='60%'}
 knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
 ```
 *[wikipedia - Map projections](https://en.wikipedia.org/wiki/Map_projection)*
 
-- Many methods, many hyperparmeters; how *faithful* is the approximation?
 - Inconsistent space; hard to explain & interpret
+- Many methods, many hyperparmeters; how *faithful* is the representation?
 
 “All non-linear projections are wrong, but some are useful.”
 <br>--- Anatasios Panagiotelis (play on George Box’s quote about models)
@@ -442,7 +440,7 @@ class: transition
 
 # Linear projections, intuition
 
-You are already familiar with (p=3, d=2) linear projections!
+You are already familiar with ($p=3, d=2$) linear projections!
 
 ```{r, out.width='100%'}
 knitr::include_graphics("./figures/intuition_linear_proj.PNG")
