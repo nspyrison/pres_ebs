@@ -4,7 +4,7 @@ subtitle: "MI2 DataLab"
 author: "Nicholas Spyrison"
 length: "45 minutes"
 affiliation: "Monash University"
-email: "nicholas.syrison@monash.edu"
+email: "[nspyrison.netlify.app](https://nspyrison.netlify.app/)<br>nicholas.syrison@monash.edu"
 date: "11 October 2021"
 slide_url:
 output:
@@ -40,6 +40,12 @@ output:
 editor_options:
   chunk_output_type: console
 ---
+```{r cheemVer, include=FALSE}
+## wants close to this commit:
+if(F)
+  remotes::install_github( ## Exact commit:
+    "nspyrison/cheem@9a627367d66808c8d0c6a63e7dbbd1794387f8b7")
+```
 
 ```{r, include=FALSE}
 current_file <- knitr::current_input()
@@ -205,7 +211,7 @@ count: false
 <h2 style="font-weight:900!important;">`r rmarkdown::metadata$subtitle`</h2>
 .bottom_abs.width100[
 <br>
-Presenter: *`r rmarkdown::metadata$author`* <br>
+*`r rmarkdown::metadata$author`* <br>
 `r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$email` <br>
 `r rmarkdown::metadata$date` <br><br>
@@ -822,12 +828,12 @@ count: false
 
 # Thank you for attending
 <hr><br>
-<h1 class="monash-blue" style="font-size: 24pt!important;">`r rmarkdown::metadata$title`</h1>
+<h2 class="monash-blue" style="font-size: 20pt!important;">`r rmarkdown::metadata$title`</h1>
 <br>
 <h3 style="font-weight:900!important;">`r rmarkdown::metadata$subtitle`</h2>
 .bottom_abs.width100[
 <br>
-Presenter: *`r rmarkdown::metadata$author`* <br>
+*`r rmarkdown::metadata$author`* <br>
 `r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$email` <br>
 `r rmarkdown::metadata$date` <br><br>
