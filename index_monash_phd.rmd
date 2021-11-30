@@ -1,11 +1,11 @@
 ---
 title: "Multivariate data vis, dynamic linear projection, and their application to local explanations of models"
-subtitle: "MI2 DataLab"
+subtitle: "Monash PhD reading group"
 author: "Nicholas Spyrison"
-length: "45 minutes"
+length: "~45 minutes"
 affiliation: "Monash University"
 email: "[nspyrison.netlify.app](https://nspyrison.netlify.app/)<br>nicholas.syrison@monash.edu"
-date: "11 October 2021"
+date: "6 Dec 2021"
 slide_url:
 output:
   xaringan::moon_reader:
@@ -116,8 +116,6 @@ Slides -- `r rmarkdown::metadata$slides`
 
 # Terminology
 
-Background: statistics and R
-
 - *Variable* over attribute, column, measure
 - *Observation* over item
 - *Projection* over embedding
@@ -131,96 +129,15 @@ Background: statistics and R
 
 ---
 
-# Outline
-
-<br>
-Three sections:
-
-- Multivariate data visualization
-- Linear projections & _tours_
-- Local explanation of a black-box models & application of radial tours to local explanations, {cheem}
-
----
-class: transition
-
-## Multivariate data visualization
-
----
-
-# Motivation
-
-- Data visualization is better than numerical summarization alone
-    - What would this 2D scatterplot look like?
-```{r, out.width = '100%'}
-knitr::include_graphics("./figures/anscombe_1of2.PNG")
-```
-
----
-count: false
-
-# Motivation
-
-- Data visualization is better than numerical summarization alone
-```{r, out.width = '60%'}
-knitr::include_graphics("./figures/anscombe_2of2.PNG")
-```
-*Anscombe, 1973*
-
-<!-- also see: -->
-<!-- Datasaurus dozen *Matejka & Fitzmaurice, 2017* \\ -->
-<!-- Test is a liability (gorilla data) *Yanai & Lercher, 2020* \\ -->
-<!-- Eureka data *Coleman, 1986* \\ -->
---
-
-- Important for validating assumption & exploratory data analysis
-- Data visualization preprocesses the cognitive work, allowing the audience to better internalize the evidence *Munzner, 2014*
-- Ideally *data*-space rather than *feature*-space *Wickham, 2015*
-    - *ie. Prefer to visualize X's directly rather than features of X's*
-
----
-
-# Data types
+# Context: Data types
 
 ```{r, out.width = '70%'}
 knitr::include_graphics("./figures/munzner_datatypes.PNG")
 ```
 *Munzner, 2014*
 
-- Numerical flat tables
-- Alternatively, feature-spaces of other formats
-
----
-
-# Channel encodings
-
-```{r, out.width = '70%'}
-knitr::include_graphics("./figures/munzner_channels.PNG")
-```
-*Munzner, 2014*
-
-- Position/spatial comes out on top in either case
-
----
-
-# The problem
-
-<br>Let data be $X_{n\times p}$, $n$ observations, of $p$ variables
-<br><br>**How do we optimally visualize, $p$ dimensions?**
-<br>
-
---
-
-<br>1) $p$ univariate histograms/densities curves
-<br>2) Scatterplot matrices (SPLOM), $p-1$ factorial 2d scatter plots
-<br>3) Parallel coordinate plot
-<br>4) Dimension reduction & projections
-
---
-<br><br>__Caveat:__
-
-- Precluded observation based visuals; _eg._ pixel-based, Chernoff faces
-    - Don't use position
-    - May consider when few $n<<p$
+- Complete numerical matrix
+- Alternatively, feature decomposition of other formats
 
 ---
 
@@ -250,7 +167,7 @@ gg <- GGally::ggpairs(X, upper = "blank",
   scale_fill_brewer(palette = "Dark2") +
   theme(axis.text = element_blank(), axis.ticks = element_blank())
 ```
-`GGally::ggpairs(...)`
+`GGally::ggpairs()`
 
 - Scalability?
 - Structure in 3+ variables?
@@ -268,7 +185,7 @@ GGally::ggparcoord(
   theme(legend.position = "bottom", legend.direction = "horizontal", 
         axis.text.y = element_blank(), axis.ticks.y = element_blank())
 ```
-`GGally::ggparcoord(...)`
+`GGally::ggparcoord()`
 
 - Scalability?
 - Poor comparison across non-adjacent variables; asymmetric across variable order
@@ -292,7 +209,7 @@ GGally::ggparcoord(
 
 - Other transformations: variable interactions, exponents, _etc._
 - Examples:
-    - Sammon Plot
+    - Sammon plot
     - Self Organizing Maps (SOM)
     - t-distributed Stochastic Neighbor Embedding (tSNE)
     - Uniform Manifold Approximation and Projection (UMAP)
@@ -318,22 +235,6 @@ knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
 <!-- (borrowing George Box’s -->
 <!-- quote about models) -->
 
----
-
-# Dimension notation & terminology
-
-$p$ is the dimensionality of input space
-
-Let $d$ the dimensionality of output space
-
-<br>__Caveat:__
-
-- Intrinsic Data Dimensionality, $idd$, number of variables needed in a minimal representation of the data
-    - Usually estimated with 'fractal' methods, `Rdimtools::est.*` function, or *subjectively* look at correlation plots
-    - _eg._ a piece of paper exists in 3D though use 2D is usual sufficient
-- Use caution $p>idd$:
-    - What is the dimensionality of Pyschology survey asking 100 questions about Big Five Personality Traits
-    - `DALEX::fifa` 35+ skill measurements, while $idd$ is closer to 8-9; in [triplot](https://github.com/ModelOriented/triplot) Katarzyna creates aggregated 'aspects', *after* a model fit; later I'll manual aggregate *before* the model fit
 
 ---
 class: transition
@@ -355,7 +256,7 @@ knitr::include_graphics("./figures/intuition_linear_proj.PNG")
 
 ---
 
-# Linear projections
+# Linear projections & notation
 
 <br>
 ```{r, out.width='100%'}
@@ -381,7 +282,8 @@ __Caveat:__
 <br><br>
 1) Scale each variable to [0, 1] or by standard deviations away from the mean<br>
 2) Some people 'Whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified<br>
-3) If $p$ is sizable, say more than 10, embed the variables in fewer components, typically by eyeballing an elbow in a scree plot<br>
+3) If $p$ is sizable, say more than 10 or, may do an initial round of dimension reduction to get to a realistic view-space<br>
+    - Typically with PCA by eyeballing an elbow in a scree plot<br>
     - "We approximate 90% of the variation of our 20 variable in the first 5 principal components"<br>
 4) Visualize with data- or component- space with scatterplot matrix, _etc._
 
@@ -407,14 +309,19 @@ knitr::include_graphics(
 *Asimov, 1984*
 
 ```{r, out.width='60%'}
+dat <- spinifex::penguins[, 1:5]
+X <- dat[, 1:4]
+Y <- dat$species
 X_std <- X %>% spinifex::scale_sd()
 
 if(F){
-  gt_path <- spinifex::save_history(X_std, max_bases = 6)
+  gt_path <- spinifex::save_history(X_std, max_bases = 12)
   
-  ggt <- ggtour(gt_path, angle = .2) +
-    proto_default(list(color = Y, shape = Y),
-                  list(size = 2))
+  ggt <- ggtour(gt_path, angle = .1) +
+    proto_point(aes_args = list(color = Y, shape = Y),
+                identity_args = list(size = 2)) +
+    proto_basis() +
+    proto_origin()
   
   options(gganimate.dev_args = list(width = 720, height = 480))
   anim <- animate_gganimate(ggt)
@@ -425,7 +332,12 @@ if(F){
 }
 include_graphics("./figures/grand_tour.gif")
 ```
-`tourr::grand_tour(...) %>% spinifex::ggtour(...)`
+```
+tourr::grand_tour() %>%
+  spinifex::ggtour() +
+  spinifex::proto_point() +
+  spinifex::proto_basis()
+```
 
 ---
 
@@ -474,7 +386,12 @@ if(F){
 }
 include_graphics("./figures/manual_tour.gif")
 ```
-`spinifex::manual_tour(...) %>% spinifex::ggtour(...)`
+```
+spinifex::manual_tour() %>% 
+  spinifex::ggtour() +
+  spinifex::proto_point() +
+  spinifex::proto_basis()
+```
 
 ---
 
@@ -484,7 +401,7 @@ include_graphics("./figures/manual_tour.gif")
 kableExtra::kbl(data.frame(
   Package = c("{tourr}", "{spinifex}", "{ferrn}"),
   Description = c("Tour paths, geodesic interpolation, display in *interactive* base R", "Manual tours, basis function, display with {ggplot2} to {plotly}/{gganimate} animations", "Diagnostic plots for projection pursuit (guided tour), tracing basis-paths"),
-  Authors = c("Wickham et. al.", "Spyrison & Cook", "Zhang et. al.")
+  Authors = c("Wickham et al., 2011", "Spyrison & Cook, 2020", "Zhang et al., 2021")
 ))
 ```
 
@@ -494,8 +411,8 @@ __Caveat:__
 
 - Tours needn't project to $d=2$
     - 1D density curves
-    - $d<p$ Parallel coordinate plot, Chernoff faces
-
+    - 3D scatterplot
+    - $d~|~d<p$ Parallel coordinate plot, Chernoff faces
 ---
 
 # New {spinifex} api; ggproto
@@ -524,8 +441,7 @@ if(F){
   dat  <- penguins[, 1:4] %>% scale_sd()
   clas <- penguins$species
   bas  <- basis_pca(dat, d = 1)
-  mt_path <-
-    manual_tour(bas, manip_var = 4) ## body_mass_g
+  mt_path <- manual_tour(bas, manip_var = 4) ## body_mass_g
   
   ggt <- ggtour(mt_path, dat, angle = .2) +
     proto_basis1d() +
@@ -543,14 +459,14 @@ knitr::include_graphics(
   "./figures/manual_tour1d.gif")
 ```
 - `proto_*` functions return lists of `geom_*`
-- Abstract away complexity; feel like operating original data
+- Abstract away complexity; feel like operating original data similar to {ggplot2}
 ]
 
 ---
 
 # Reading on tours
 
-Also see: [A review of State-of-the-Art on Tours, arxiv.org/pdf/2104.08016.pdf](https://arxiv.org/pdf/2104.08016.pdf), prepublished WIREs article
+Also see: [A review of State-of-the-Art on Tours, arxiv.org/pdf/2104.08016.pdf](https://arxiv.org/pdf/2104.08016.pdf), preprint of accept WIREs article
 
 - User interaction
 - Basis paths, as enscribed on $p-$spheres/torii
@@ -575,19 +491,19 @@ class: transition
 knitr::include_graphics(
   "./figures/lime_nonlinear.png")
 ```
-*Ribeiro, M. et. al. (2017). Why Should I Trust You?*
+*Ribeiro, et al. (2017). Why Should I Trust You?*
 
 ---
 
 .pull-left[
 # SHAP values
 
-- FIFA 2020 data, 5000 observations, ~35 skill measurements aggregated to 9 variables, Y: wages
+- FIFA 2020 data, 5000 observations, ~35 skill measurements aggregated to 9 variables, Y: wages [2020 Euros]
 - Model: Random forest, regress wages given 9 skill measurements
 - SHAP is a model-agnostic local explanation
 - Approximate linear variable importance at one observation; the median importance, permuting over combinations of the explanatory variables
 
-**The model has very different variable importances across the player position**
+**The model has very different variable importance across the player position**
 ]
 
 .pull-right[
@@ -609,7 +525,7 @@ class: transition
 - Synthetic data, 3 spherical clusters at the points of a triangle
 - 420 observations, 4 variables (2 signal, 2 noise)
 - Fit a {randomForest} model predicting cluster
-- Extract the SHAP values from *each* observation using {treeshap}, Konrad _et al._
+- Extract the SHAP values from _each_ observation using {treeshap}, Komisarczyk _et al._
 
 --
 
@@ -661,38 +577,25 @@ rt_anim
 cheem::run_app()
 ```
 
----
-
-# Status
-
-**Looking for:**
-- Local explanations to interrogate, *esp.* published or vignettes
-- Suitable upcoming journals or conferences
-
 --
 <br>
 
 - See a hosted shiny app at: [ebsmonash.shinyapps.io/cheem_initial/](https://ebsmonash.shinyapps.io/cheem_initial/)
-- {cheem} is now in (maturing) package format [github.com/nspyrison/cheem](https://github.com/nspyrison/cheem)
-
-```
-remotes::install_github("nspyrison/cheem")
-cheem::run_app()
-```
-
-- Turning attention to regression case
+- {cheem} in package format, on CRAN soon [github.com/nspyrison/cheem](https://github.com/nspyrison/cheem)
 
 ---
 
-# Possible extensions
+```
+## Github dependancies:
+remotes::install_github('ModelOriented/treeshap')
+remotes::install_github("nspyrison/spinifex")
 
-- {cheem}; extend types of models and local explanations
-- {spinifex}; extending `proto_*` from different `geom_*`
-- {cheem} & {spinifex}; more perfromant rendering & shiny apps?
-- Tour multivariate time series; animate over vary lags/lead, vary the basis of index
-- Tours in AR/VR displaying 3D scatterplot rather than 2D projections
-- Consolidated interactive tour application
-   - Elusive, Di has been hunting a stable solution for ages
+## Install cheem development version & its CRAN dependancies.
+remotes::install_github("nspyrison/cheem", dependencies = TRUE)
+## Run the {cheem} app including 3 preprocessed datasets
+cheem::run_app()
+```
+
 
 ---
 
@@ -703,7 +606,7 @@ cheem::run_app()
 
 ```{r out.width='60%'}
 knitr::include_graphics(
-  "./figures/cheem.jfif")
+  "./figures/cheem.jpg")
 ```
 
 ---
