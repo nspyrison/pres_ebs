@@ -9,10 +9,10 @@ date: "11 October 2021"
 slide_url:
 output:
   xaringan::moon_reader:
+      ##- "assets/xaringan-themer.css"
     css:
       - ninjutsu
       - "assets/font-awesome-all.css"
-      ##- "assets/xaringan-themer.css"
       - "assets/tachyons-addon.css"
       - "assets/animate.css"
       - "assets/fira-code.css"
@@ -40,13 +40,6 @@ output:
 editor_options:
   chunk_output_type: console
 ---
-```{r cheemVer, include=FALSE}
-## wants close to this commit:
-if(F)
-  remotes::install_github( ## Exact commit:
-    "nspyrison/cheem@9a627367d66808c8d0c6a63e7dbbd1794387f8b7")
-```
-
 ```{r, include=FALSE}
 current_file <- knitr::current_input()
 basename <- gsub(".Rmd$", "", current_file)
@@ -79,118 +72,18 @@ require("plotly")
 require("spinifex")
 require("tourr")
 require("cheem")
-load("./R/2preprocess_simulation.RData")
-shap_obs <- 18L; comp_obs <- 111L;
+this_ls <- readRDS("./R/preprocess_toy_classification.rds")
+prim_obs <- 124L; comp_obs <- 86L;
 
-## prep linked plotly for later ----
-THIS_linked_plotly_func <- function(
-  layer_ls,
-  shap_obs = NULL,
-  comp_obs = NULL,
-  height_px = 640L,
-  width_px = 640L,
-  do_include_maha_qq = FALSE
-){
-  .alpha <- ifelse(nrow(layer_ls$decode_df) > 999L, .1, .6)
-  .xlab <- ifelse(do_include_maha_qq == FALSE, "PC1",
-                  "PC1 | Quantile, chi-squared")
-  .ylab <- ifelse(do_include_maha_qq == FALSE, "PC2",
-                  "PC2 | Quantile, observed Mahalanobis distance")
-  ## Remove QQ maha rows if needed
-  plot_df <- layer_ls$plot_df ## Init
-  if(do_include_maha_qq == FALSE){
-    plot_df <- layer_ls$plot_df[
-      layer_ls$plot_df$projection_nm != "QQ Mahalanobis distance", ]
-    height_px <- height_px / 2L ## Half height display as qq maha is removed.
-  }
-  is_classification <- attr(layer_ls, "problem_type") == "classification"
-  # ifelse("is_misclassified" %in colnames(layer_ls$decode_df), TRUE, FALSE)
-  pred_clas <- as.factor(FALSE) ## If regression; dummy pred_clas
-  if(is_classification == TRUE) pred_clas <-
-    layer_ls$decode_df$predicted_class %>%
-    rep_len(nrow(plot_df)) %>%
-    as.factor()
-  
-  gg <- plot_df %>%
-    plotly::highlight_key(~rownum) %>%
-    ggplot(aes(V1, V2))
-  ## Red misclassified points, if present
-  if(is_classification == TRUE){
-    .rn_misclass <- which(layer_ls$decode_df$is_misclassified == TRUE)
-    .idx_misclas <- plot_df$rownum %in% .rn_misclass
-    if(sum(.idx_misclas) > 0L){
-      .df <- plot_df[.idx_misclas, ] %>% plotly::highlight_key(~rownum)
-      gg <- gg +
-        geom_point(aes(V1, V2), .df,
-                   color = "red", fill = NA,
-                   shape = 21L, size = 3L, alpha = .alpha)
-    }
-  }
-  ## Highlight comparison obs, if passed
-  if(is.null(comp_obs) == FALSE){
-    .idx_comp <- plot_df$rownum == comp_obs
-    if(sum(.idx_comp) > 0L){
-      .df <- plot_df[.idx_comp, ] %>% plotly::highlight_key(~rownum)
-      gg <- gg +
-        ## Highlight comparison obs
-        geom_point(aes(V1, V2, color = pred_clas[.idx_comp]),
-                   .df, size = 4L, shape = 4L)
-    }
-  }
-  ## Highlight shap obs, if passed
-  if(is.null(shap_obs) == FALSE){
-    .idx_shap <- plot_df$rownum == shap_obs
-    if(sum(.idx_shap) > 0L){
-      .df <- plot_df[.idx_shap, ] %>% plotly::highlight_key(~rownum)
-      gg <- gg +
-        geom_point(aes(V1, V2, color = pred_clas[.idx_shap]),
-                   .df, size = 5L, shape = 8L)
-    }
-  }
-  ## Maha skew text,
-  #### geom_text not working with plotly... & annotate() not working with facets...
-  if(do_include_maha_qq == TRUE){
-    gg <- gg +
-      geom_text(aes(x = -Inf, y = Inf, label = ggtext),
-                hjust = 0L, vjust = 1L, size = 4L)
-  }
-  ## Normal points
-  gg <- gg +
-    suppressWarnings(geom_point(
-      aes(V1, V2, color = pred_clas, shape = pred_clas, tooltip = tooltip),
-      alpha = .alpha, show_legend = FALSE)) +
-    facet_grid(rows = vars(projection_nm), cols = vars(layer_nm), scales = "free") +
-    theme_bw() +
-    labs(x = .xlab, y = .ylab) +
-    scale_color_brewer(palette = "Dark2") +
-    theme(axis.text  = element_blank(),
-          axis.ticks = element_blank(),
-          legend.position = "off")
-  return(gg)
-}
-linked_plotly <- THIS_linked_plotly_func(
-  layer_ls, shap_obs, comp_obs,
-  do_include_maha_qq = FALSE) + ggplot2::theme(aspect.ratio = 1)
-# %>%
-#   ggplotly(tooltip = "tooltip") %>% #, width = 960, height = 480) %>%
-#   config(displayModeBar = FALSE) %>% ## Remove html buttons
-#   layout(dragmode = "select", showlegend = FALSE) %>% 
-#   event_register("plotly_selected") %>%
-#   highlight(on = "plotly_selected", off = "plotly_deselect")
+glob_view <- global_view(this_ls, prim_obs, comp_obs)
 
-  ## Prep rt_anim for later -----
-.df <- layer_ls$shap_df
-bas <- .df[shap_obs, -ncol(.df)] %>%
-  as.matrix(nrow = 1L) %>% t() %>%
-  tourr::normalise()
-mv <- 2L#spinifex::manip_var_of(bas)
-.opts <- rownames(bas)
-mv_nm <- .opts[mv]
+## Prep rt_anim for later -----
+bas <- basis_attr_df(this_ls$attr_df, prim_obs)
+mv  <- manip_var_of_attr_df(this_ls$attr_df, prim_obs, comp_obs)
 
-ggt142 <- radial_cheem_ggtour(
-  layer_ls, bas, mv_nm,
-  shap_obs, comp_obs,
-  do_add_pcp_segments = TRUE,
+ggt142 <- radial_cheem_tour(
+  this_ls, bas, mv,
+  prim_obs, comp_obs,
   pcp_shape = c(142, 124), ## '|' plotly and gganimate respectively
   angle = .08)
 
@@ -350,10 +243,12 @@ knitr::kable(head(dat), format = 'html')
 ```{r, out.width='50%'}
 X <- dat[, 1:4]
 Y <- dat$species
-GGally::ggpairs(X, upper = "blank",
+gg <- GGally::ggpairs(X, upper = "blank",
                 mapping = ggplot2::aes(color = Y, shape = Y)) +
   theme_bw() +
-  scale_color_brewer(palette = "Dark2")
+  scale_color_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") +
+  theme(axis.text = element_blank(), axis.ticks = element_blank())
 ```
 `GGally::ggpairs(...)`
 
@@ -367,8 +262,11 @@ GGally::ggpairs(X, upper = "blank",
 ```{r, out.width='50%'}
 GGally::ggparcoord(
   dat, columns = c(1:4), groupColumn = 5) +
-  theme_bw() + 
-  scale_color_brewer(palette = "Dark2") + labs(x="", y="")
+  theme_bw() +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x="", y="") +
+  theme(legend.position = "bottom", legend.direction = "horizontal", 
+        axis.text.y = element_blank(), axis.ticks.y = element_blank())
 ```
 `GGally::ggparcoord(...)`
 
@@ -726,7 +624,7 @@ class: transition
 # Global View
 
 ```{r, echo = F, out.width = '80%'}
-linked_plotly
+glob_view
 ```
 
 ???
