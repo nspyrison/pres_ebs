@@ -17,6 +17,30 @@
 .left-column h2:last-of-type, .left-column h3:last-child {
   color: #93a1a1;
 }
+.left-two-thirds{
+  width: 64%;
+  float: left;
+  padding-top: 1em;
+}
+
+.right-third{
+  width: 32%;
+  float: right;
+  padding-top: 1em;
+}
+
+.right-two-thirds{
+  width: 64%;
+  float: right;
+  padding-top: 1em;
+}
+
+.left-third{
+  width: 32%;
+  float: left;
+  padding-top: 1em;
+}
+
 .right-column {
   width: 75%;
   float: right;

@@ -1,6 +1,6 @@
 ---
 title: "Multivariate data vis, dynamic linear projection, and their application to local explanations of models"
-subtitle: "Monash PhD reading group"
+subtitle: "Monash EBS reading group"
 author: "Nicholas Spyrison"
 length: "~45 minutes"
 affiliation: "Monash University"
@@ -507,7 +507,7 @@ knitr::include_graphics(
 
 ---
 
-# Classification -- data & preprocessing
+# Classification example
 
 - Synthetic data, 3 spherical clusters at the points of a triangle
 - 420 observations, 4 variables (2 signal, 2 noise)
