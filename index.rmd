@@ -6,7 +6,7 @@ length: "~45 minutes"
 affiliation: "Monash University"
 email: "[nspyrison.netlify.app](https://nspyrison.netlify.app/)<br>nicholas.syrison@monash.edu"
 date: "6 Dec 2021"
-slide_url:
+slides_url: "[nspyrison.github.io/pres_ebs](https://nspyrison.github.io/pres_ebs/#1)"
 output:
   xaringan::moon_reader:
       ##- "assets/xaringan-themer.css"
@@ -109,10 +109,8 @@ count: false
 `r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$email` <br>
 `r rmarkdown::metadata$date` <br><br>
-Slides -- `r rmarkdown::metadata$slides`
-[nspyrison.github.io/mi2_talk](https://nspyrison.github.io/mi2_talk/#1)
+Slides -- `r rmarkdown::metadata$slides_url`
 ]
-
 ---
 
 # Terminology
@@ -618,5 +616,5 @@ count: false
 `r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$email` <br>
 `r rmarkdown::metadata$date` <br><br>
-Slides -- [nspyrison.github.io/mi2_talk](https://nspyrison.github.io/mi2_talk/#1)
+Slides -- `r rmarkdown::metadata$slides_url`
 ]
