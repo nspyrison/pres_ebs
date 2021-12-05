@@ -72,28 +72,41 @@ require("plotly")
 require("spinifex")
 require("tourr")
 require("cheem")
-this_ls <- readRDS("./R/preprocess_toy_classification.rds")
-prim_obs <- 36; comp_obs <- 23;
+this_ls <- readRDS("./R/preprocess_penguins.rds")
+prim_obs <- 124L; comp_obs <- 86L
 w <- 1440 *(12/15); h <- 480 * (12/15)
 
 glob_view <- global_view(this_ls, prim_obs, comp_obs, 
                          width_px = w, height_px = h)
 
-## Prep rt_anim for later -----
-bas <- basis_attr_df(this_ls$attr_df, prim_obs)
-mv  <- manip_var_of(bas)
+
+if(F){
+  ## Prep rt_anim for later -----
+  bas <- basis_attr_df(this_ls$attr_df, prim_obs)
+  mv  <- manip_var_of(bas)
   #manip_var_of_attr_df(this_ls$attr_df, prim_obs, comp_obs)
-
-ggt142 <- radial_cheem_tour(
-  this_ls, bas, mv,
-  prim_obs, comp_obs,
-  pcp_shape = c(142, 124), ## '|' plotly and gganimate respectively
-  angle = .08)
-
-rt_anim <- animate_plotly(
-  ggt142, fps = 4L, width = w * (2/3), height = w * (4/9)) %>%
-  layout(dragmode = FALSE, showlegend = FALSE, 
-         xaxis = list(scaleratio = 3L)) ## extra wide cause densities are narrow
+  
+  ggt142 <- radial_cheem_tour(
+    this_ls, bas, mv,
+    prim_obs, comp_obs,
+    pcp_shape = 124,
+    ## '|' == 142 & 124 got plotly and gganimate respectively
+    angle = .08)
+  anim <- animate_gganimate(
+    ggt142, fps = 4, rewind = TRUE,
+    start_pause = 1, end_pause = 2,
+    height = w * (4/9), width = w * (2/3), units = "px",
+    res = 150)
+  ## Save rendered animation as .gif
+  gganimate::anim_save("cheem_tour.gif",
+                       animation = anim,
+                       path = "./figures")
+}
+# rt_anim <- animate_plotly(
+#   ggt142, fps = 4L, width =, height = w * (4/9)) %>%
+#   layout(dragmode = FALSE, showlegend = FALSE,
+#          xaxis = list(scaleratio = 3L)) 
+# ## extra wide cause densities are narrow
 ```
 
 background-size: cover
@@ -118,12 +131,12 @@ Slides -- `r rmarkdown::metadata$slides_url`
 - *Variable* over attribute, column, measure
 - *Observation* over item
 - *Projection* over embedding
-- R, Grammar of Graphics, & {ggplot2}
+- R, Grammar of Graphics, & __ggplot2__
 
 <br>
 # Etiquette
 
-- Please unmute & interrupt for clarifications & discussion
+- Please interrupt for clarifications & discussion
 - Tangential or extension questions at the end, time permitting
 
 ---
@@ -145,7 +158,7 @@ knitr::include_graphics("./figures/munzner_datatypes.PNG")
 - Penguins near Palmer Station, Antarctica
 - 330 Observations
 - X variables: 4 physical measurements
-- species of penguin, mapped to color & shape (later model response)
+- species of penguin mapped to color & shape
 
 ```{r}
 dat <- spinifex::penguins[, 1:5]
@@ -503,15 +516,6 @@ knitr::include_graphics(
 
 ---
 
-# Classification example
-
-- Synthetic data, 3 spherical clusters at the points of a triangle
-- 420 observations, 4 variables (2 signal, 2 noise)
-- Fit a __randomForest__ model predicting cluster
-- Extract the SHAP values from _each_ observation using __treeshap__, Komisarczyk _et al._, 2021 
-
----
-
 # Global View
 
 ```{r, echo = F, out.width = '100%'}
@@ -530,7 +534,7 @@ glob_view
 ---
 
 .left-third[
-# Radial tour
+# Cheem radial tour
 
 - Primary & comparison observation: dashed & dotted lines
 - SHAP values displayed as parallel coordinate lines on basis
@@ -541,7 +545,7 @@ glob_view
 
 .right-two-thirds[
 ```{r, echo = F, out.width='100%', out.height='600px'}
-rt_anim
+include_graphics("./figures/cheem_tour.gif")
 ```
 ]
 
