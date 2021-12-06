@@ -155,8 +155,8 @@ knitr::include_graphics("./figures/munzner_datatypes.PNG")
 
 # Example data -- Palmer penguins
 
-- Penguins near Palmer Station, Antarctica
-- 330 Observations
+- penguins near Palmer Station, Antarctica
+- 330 observations
 - X variables: 4 physical measurements
 - species of penguin mapped to color & shape
 
@@ -285,7 +285,7 @@ knitr::include_graphics(
 ```
 
 <br>
-Using linear combinations of variables we can find bases (orientation) that separate clusters the most (OLD)
+Using linear combinations of variables we can find bases (orientation) that separate clusters the most (oLDA)
 <br>
 
 --
@@ -301,7 +301,7 @@ __Caveat:__
 
 <br><br>
 1) Scale each variable to [0, 1] or by standard deviations away from the mean<br>
-2) Some people 'Whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified<br>
+2) Some people 'whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified<br>
 3) If $p$ is sizable, say more than 10 or, may do an initial round of dimension reduction to get to a realistic view-space<br>
     - Typically with PCA by eyeballing an elbow in a scree plot
     - "We approximate 90% of the variation of our 20 variable in the first 5 principal components"
@@ -432,7 +432,7 @@ manual_tour() %>%
 ```{r, results='markup'}
 kableExtra::kbl(data.frame(
   Package = c("{tourr}", "{spinifex}", "{ferrn}"),
-  Description = c("Tour paths, geodesic interpolation, display in *interactive* base R", "Manual tours, basis function, display with {ggplot2} to {plotly}/{gganimate} animations", "Diagnostic plots for projection pursuit (guided tour), tracing basis-paths"),
+  Description = c("Tour paths, geodesic interpolation, display in *interactive* base R", "Manual tours, basis function, display with ggplot2 to plotly/gganimate animations", "Diagnostic plots for projection pursuit (guided tour), tracing basis-paths"),
   Authors = c("Wickham et al., 2011", "Spyrison & Cook, 2020", "Zhang et al., 2021")
 ))
 ```
