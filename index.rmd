@@ -1,12 +1,12 @@
 ---
-title: "Multivariate data vis, dynamic linear projection, and their application to local explanations of models"
-subtitle: "Monash EBS reading group"
+title: "Multivariate Data Visualization and Thinking"
+subtitle: "IFFRUG"
 author: "Nicholas Spyrison"
 length: "~45 minutes"
-affiliation: "Monash University"
-email: "[nspyrison.netlify.app](https://nspyrison.netlify.app/)<br>nicholas.syrison@monash.edu"
-date: "6 Dec 2021"
-slides_url: "[nspyrison.github.io/pres_ebs](https://nspyrison.github.io/pres_ebs/#1)"
+affiliation: "IFF, Madison"
+email: "[nspyrison.netlify.app](https://nspyrison.netlify.app/)<br>Nicholas.Syrison@iff.com"
+date: "April 2023"
+slides_url: "[nspyrison.github.io/pred_ebs](https://nspyrison.github.io/pred_ebs/#1)"
 output:
   xaringan::moon_reader:
       ##- "assets/xaringan-themer.css"
@@ -72,19 +72,17 @@ require("plotly")
 require("spinifex")
 require("tourr")
 require("cheem")
+
 this_ls <- readRDS("./R/preprocess_penguins.rds")
-prim_obs <- 124L; comp_obs <- 86L
+prim_obs <- 296L; comp_obs <- 62L
 w <- 1440 *(12/15); h <- 480 * (12/15)
+glob_view <- global_view(
+  this_ls, prim_obs, comp_obs, height_px = h, width_px = w)
 
-glob_view <- global_view(this_ls, prim_obs, comp_obs, 
-                         width_px = w, height_px = h)
-
-
+## Prep rt_anim for later -----
 if(F){
-  ## Prep rt_anim for later -----
-  bas <- basis_attr_df(this_ls$attr_df, prim_obs)
-  mv  <- manip_var_of(bas)
-  #manip_var_of_attr_df(this_ls$attr_df, prim_obs, comp_obs)
+  bas <- cheem::sug_basis(this_ls$attr_df, prim_obs)
+  mv  <- cheem::sug_manip_var(this_ls$attr_df, prim_obs, comp_obs)
   
   ggt142 <- radial_cheem_tour(
     this_ls, bas, mv,
@@ -105,7 +103,7 @@ if(F){
 # rt_anim <- animate_plotly(
 #   ggt142, fps = 4L, width =, height = w * (4/9)) %>%
 #   layout(dragmode = FALSE, showlegend = FALSE,
-#          xaxis = list(scaleratio = 3L)) 
+#          xaxis = list(scaleratio = 3L))
 # ## extra wide cause densities are narrow
 ```
 
@@ -119,25 +117,37 @@ count: false
 .bottom_abs.width100[
 <br>
 *`r rmarkdown::metadata$author`* <br>
-`r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$email` <br>
+`r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$date` <br><br>
 Slides -- `r rmarkdown::metadata$slides_url`
 ]
 ---
 
-# Terminology
+# Terminology & bias
 
-- *Variable* over attribute, column, measure
-- *Observation* over item
-- *Projection* over embedding
+- Stats background, your preferred terms may vary
+- __Variable__ - _p_, attribute, measure, column
+- __Observation__ - _n_, item, instance, sample, repetition, row
+- __Projection__ - an embedded space, of _d < p_ dimension
+- __Dimension__ - Overloaded, but __p__ data or approximated space, __d__ projection
 - R, Grammar of Graphics, & __ggplot2__
 
 <br>
 # Etiquette
 
-- Please interrupt for clarifications & discussion
+- Please interrupt for clarifications & elaboration
 - Tangential or extension questions at the end, time permitting
+
+---
+
+# Contents
+
+- Context and data
+- Traditional techniques
+- Dimension reduction
+- Tours
+- Cheem
 
 ---
 
@@ -155,24 +165,26 @@ knitr::include_graphics("./figures/munzner_datatypes.PNG")
 
 # Example data -- Palmer penguins
 
-- penguins near Palmer Station, Antarctica
+- Penguins near Palmer Station, Antarctica
 - 330 observations
 - X variables: 4 physical measurements
-- species of penguin mapped to color & shape
+- Species of penguin mapped to color & shape
 
 ```{r}
-dat <- spinifex::penguins[, 1:5]
+dat <- spinifex::penguins_na.rm[, 1:5]
 knitr::kable(head(dat), format = 'html')
 ```
 
 ---
 
-# Scatterplot matrix
+# Scatterplot matrix (SPLOM, small multiples)
 
 ```{r out.width='50%'}
 X <- dat[, 1:4]
 Y <- dat$species
-GGally::ggpairs(X, upper = "blank",
+GGally::ggpairs(X, lower = "blank",
+                upper = list(continuous = "points", combo = "facethist",
+                             discrete = "facetbar", na = "na"),
                 mapping = ggplot2::aes(color = Y, shape = Y)) +
   theme_bw() +
   scale_color_brewer(palette = "Dark2") +
@@ -182,7 +194,7 @@ GGally::ggpairs(X, upper = "blank",
 _Chambers, 1983_
 
 ```
-GGally::ggpairs()
+GGally::ggpairs(...)
 ```
 
 - Scalability?
@@ -203,12 +215,39 @@ GGally::ggparcoord(
 ```
 _Ocagne, 1885_
 ```
-GGally::ggparcoord()
+GGally::ggparcoord(...)
 ```
 
 - Scalability?
 - Poor comparison across non-adjacent variables; asymmetric across variable order
 - Correlation is harder to extract
+
+---
+
+# Bonus: observation-based (observation-mapped axes)
+
+```{r out.width='80%'}
+knitr::include_graphics("./figures/pixel_based.png")
+```
+
+- Scalability? Interpretability? Correlation?
+- Asymmetric across variable order
+
+---
+
+# Bonus: Chernoff faces
+
+- Scalability? Interpretability? Correlation?
+
+```
+tourr::animate_faces() ## Only for fun?
+```
+
+```{r out.width = '50%'}
+x <- dat[c(1:10, 266:275), 1:4] |> scale_sd()
+bas <- tourr::save_history(x, max_bases = 1)
+tourr::animate_faces(x, grand_tour(3))
+```
 
 ---
 
@@ -249,11 +288,7 @@ knitr::include_graphics("./figures/intuition_nonlinear_proj.PNG")
 
 “All non-linear projections are wrong, but some are useful.”
 <br>--- Anatasios Panagiotelis (play on George Box’s quote about models)
-
 <!-- quote from: NUMBAT Seminar, 04/20/2020 -->
-<!-- (borrowing George Box’s -->
-<!-- quote about models) -->
-
 
 ---
 class: transition
@@ -264,63 +299,65 @@ class: transition
 
 # Linear projections -- intuition
 
-You are already familiar with $(p=3, d=2)$ linear projections!
+Good news; you are already familiar with ($p=3, d=2$) linear projections!
 
 ```{r, out.width='100%'}
 knitr::include_graphics("./figures/intuition_linear_proj.PNG")
 ```
-LDA: _Fischer, 1936_, supervised cluster separation
 
 - Not all orientations hold interesting structure
-- But information/structure could be gleaned from rotation
+- But structural information could be gleaned from rotation
 
 ---
 
-# Linear projections  -- notation
+# Linear projections  -- rotation
 
 <br>
 ```{r, out.width='100%'}
 knitr::include_graphics(
   "./figures/linear_proj_wide.png")
 ```
+LDA: _Fischer, 1936_, supervised cluster separation
 
-<br>
-Using linear combinations of variables we can find bases (orientation) that separate clusters the most (oLDA)
-<br>
+Given the distributions and orientations of different clusters, find a basis (rotation) that separate clusters the most
 
 --
-__Caveat:__
 
 - Often times our output space is of the same dimensionality as our input space
-    - PCA returns a $pxp$ basis
-    - The reduction happens when the space is approximated with fewer components, often involving guided, but _subjective_ selection (scree plot)
+    - eg. PCA returns a $pxp$ basis
+    - The reduction happens when the space is approximated with fewer components, often involving guided, but _subjective_ selection. eg. Finding an "elbow" in screeplot
+    - Or worse -- only showing PC1:2, with no recognition or discussion of the others
 
 ---
 
-# Linear projections -- traditional approch
+# Linear projections -- traditional process
 
 <br><br>
-1) Scale each variable to [0, 1] or by standard deviations away from the mean<br>
+1) Scale each variable to [0, 1] or by standard deviations away from the mean (z-score)<br>
 2) Some people 'whiten' or 'sphere' transform the covariance matrix to an identity matrix; should be justified<br>
-3) If $p$ is sizable, say more than 10 or, may do an initial round of dimension reduction to get to a realistic view-space<br>
-    - Typically with PCA by eyeballing an elbow in a scree plot
-    - "We approximate 90% of the variation of our 20 variable in the first 5 principal components"
-4) Visualize with data- or component- space with scatterplot matrix, _etc._
+3) If $p$ is sizable, say more than 10 or, may first approximate the data in fewer components to get to a realistic dimensionality to view
+- Typically with PCA by eyeballing an elbow in the screeplot
+- "We approximate 90% of the variation of our 20 variable in the first 5 principal components"
+- Alternative mathematical approximations: "intrinsic dimensionality estimation"
 
+4) Visualize data- or component- space
+
+--
 <br><br>
-**Static, discrete, and orthogonal views**
+Visualize _one rotation (or more if lucky);_ **static, not interactive**
 
 ---
 
 # Tours
 
-- Instead of viewing only static orthogonal views, let's *animate* small changes in the basis over time
+- Instead of viewing only static views, *animate* small changes in the basis over time
     - Object permanence between frames; can see observations and cluster moving together
 
 ```{r, out.width='50%'}
 knitr::include_graphics(
   "./figures/tour_frames.PNG")
 ```
+*Buja et al., 2005*
 
 ---
 
@@ -330,7 +367,7 @@ knitr::include_graphics(
 .left-two-thirds[
 ```{r, out.width='100%'}
 if(F){
-  dat <- spinifex::penguins[, 1:5]
+  dat <- spinifex::penguins_na.rm[, 1:5]
   X <- dat[, 1:4]
   Y <- dat$species
   X_std <- X %>% spinifex::scale_sd()
@@ -343,8 +380,10 @@ if(F){
     proto_basis(text_size = 6) +
     proto_origin()
   
-  anim <- animate_gganimate(ggt, width = w * (2/3), height = w * (4/9), 
-                            res = 150, unit = "px")
+  anim <- animate_gganimate(
+    ggt, 
+    width = w * (2/3), height = w * (4/9), 
+    res = 150, unit = "px", fps = 6)
   gganimate::anim_save("grand_tour.gif",
                        animation = anim,
                        path = "./figures")
@@ -360,7 +399,8 @@ grand_tour() %>%
   ggtour() +
   proto_point() +
   proto_basis() +
-  proto_origin()
+  proto_origin() %>%
+  animate_gganimate()
 ```
 ]
 
@@ -374,21 +414,21 @@ Distinguished by how the basis path is produced
 ```{r}
 kableExtra::kbl(data.frame(
   `Tour type` =
-    c("grand", "guided", "manual", "local"),
+    c("grand", "guided", "manual", "local", "_et al._"),
   `Target bases` =
     c("random bases", "objective function (simulated annealing)",
-      "change the contribution of selected variable", 
-      "random bases within a local vacinity"),
+      "change the contribution of selected variable",
+      "random bases within a local vacinity", "slicing, lensing"),
   check.names = FALSE))
 ```
 
 --
 
-<br><br>
-- The grand tour is good for EDA, but selects target frames randomly, no objective function.
-    - Bill length is important for distinguishing the ornage cluster
-- Component spaces and grand tour have no means to "steer" the projection 
-- Look at it in more detail: control its contribution with a _manual tour_
+<br>
+- The grand tour is good for EDA, but selects target frames randomly, no objective function
+- Hypothesis; Bill length is important for distinguishing the orange cluster
+- Issue; Component spaces and grand tour have no user interaction to "steer" the basis
+- Response; Control its contribution with a _manual tour_
 
 ---
 
@@ -421,7 +461,8 @@ manual_tour() %>%
   ggtour() +
   proto_point() +
   proto_basis() +
-  proto_origin()
+  proto_origin() %>%
+  animate_gganimate()
 ```
 ]
 
@@ -431,20 +472,20 @@ manual_tour() %>%
 
 ```{r, results='markup'}
 kableExtra::kbl(data.frame(
-  Package = c("{tourr}", "{spinifex}", "{ferrn}"),
-  Description = c("Tour paths, geodesic interpolation, display in *interactive* base R", "Manual tours, basis function, display with ggplot2 to plotly/gganimate animations", "Diagnostic plots for projection pursuit (guided tour), tracing basis-paths"),
-  Authors = c("Wickham et al., 2011", "Spyrison & Cook, 2020", "Zhang et al., 2021")
+  Package = c("{tourr}", "_{spinifex}_", "{ferrn}",
+              "{liminal}", "{loon.tour}", "_{cheem}_", 
+              "{detour}"),
+  Description = c("Tour paths, geodesic interpolation, display in *interactive* base R", "Manual tours, compose animations exportable to plotly/gganimate", "Diagnostic plots for projection pursuit (guided tour), tracing basis-paths", "Ensemble graphics with tSNE and tours side-by-side", "Graphics display system 'loon' for tours", "Explore local explanations of non-linear models with the radial tour", "Alternative HTML with brushing and 3D proj, but no basis"),
+  Authors = c("Wickham et al., 2011", "Spyrison & Cook, 2020", "Zhang et al., 2021", "Lee, 2021", "Xu & Oldford, 2021", "Spyrison, 2022", "Hart & Wang, 2022")
 ))
 ```
 
 --
-<br><br>
-__Caveat:__
 
-- Tours needn't project to $d=2$
+- Reminder: other geometric display can be used when $d!=2$
     - 1D density curves
     - 3D scatterplot
-    - $d~|~d<p$ Parallel coordinate plot, Chernoff faces
+    - $d$-dim scatterplot matrix, parallel coordinate plots
 
 ---
 
@@ -462,13 +503,14 @@ Also see: [A review of State-of-the-Art on Tours, arxiv.org/pdf/2104.08016.pdf](
 ---
 class: transition
 
-## Local explanation of a black-box models & application of radial tours, __cheem__
+## Local explanation of a black-box models & application of radial tours, _cheem_
 
 ---
 
 # Local explanation
 
-- Approximation of the linear variable importance to the model in the vacinity of one observation of a model
+- Given a non-linear ("blackbox") model, how can we maintain interpretability
+- Approximation of the linear variable importance to the model in the vicinity of _one_ observation of a model
 
 ```{r, echo = F, out.width = '60%'}
 knitr::include_graphics(
@@ -481,13 +523,16 @@ _Ribeiro, et al. (2017). Why Should I Trust You?_
 .pull-left[
 # SHAP values
 
+- SHapley Additive exPlanation
 - FIFA 2020 data, 5000 observations, ~35 skill measurements aggregated to 9 variables, Y: wages [2020 Euros]
-- Model: Random forest, regress wages given 9 skill measurements
+- Model: Random forest regressing wages from 9 skill measurements
 - SHAP is a model-agnostic local explanation
 - Approximate linear variable importance at one observation; the median importance, permuting over combinations of the explanatory variables
 
 **The model has very different variable importance across the player position**
 ]
+
+--
 
 .pull-right[
 ```{r, echo = F, out.width = '100%'}
@@ -500,8 +545,8 @@ knitr::include_graphics(
 
 # Cheem, concept
 
-- Create a black-box model
-- Extract explanations for every variable (constitutionally expensive)
+- Create a non-linear model
+- Extract explanations for every observation (computationally expensive)
 - __Global view__: approximate data- and attribution-space side-by-side
     - Explore with liked brushing, tooltips, interactive tabular display
     - Select a primary and comparison point to explore their explanation
@@ -511,8 +556,10 @@ knitr::include_graphics(
 
 --
 <br>
-- Generalizable to all compatible model * explanation pairings
-- Illustrate with random forests and a tree SHAP (reduced computational complexity)
+__New__, at a github server near you,
+
+- model- and local explanation-agnostic (BYO)
+- Illustrationed with random forests and a tree SHAP (reduced computational complexity)
 
 ---
 
@@ -553,31 +600,31 @@ include_graphics("./figures/cheem_tour.gif")
 
 # Demo the app
 
-<br><br>
-Walk through regression case
+Explore interactively with an R shiny application
+
+<br>
+Local resources:
 ```{r, echo=T,eval=F}
 cheem::run_app()
 ```
 <br>
 
-- See a hosted shiny app (slightly outdated): [ebsmonash.shinyapps.io/cheem_initial/](https://ebsmonash.shinyapps.io/cheem_initial/)
-- __cheem__ in package format, on CRAN soon [github.com/nspyrison/cheem](https://github.com/nspyrison/cheem)
+- Externally hosted shiny app (outdated): [ebsmonash.shinyapps.io/cheem_initial/](https://ebsmonash.shinyapps.io/cheem_initial/)
+- __cheem__ (back) on CRAN soon, available on GitHub: [github.com/nspyrison/cheem](https://github.com/nspyrison/cheem)
 
 ---
 
 # Cheem -- getting started
 
+<br><br>
 ```
-## Github dependancies:
-remotes::install_github('ModelOriented/treeshap')
-remotes::install_github("nspyrison/spinifex")
-
 ## Install cheem development version & its CRAN dependancies.
 remotes::install_github("nspyrison/cheem", dependencies = TRUE)
-## Run the {cheem} app, serveral preprocessed datasets or bring your own
+## Run the {cheem} app
 cheem::run_app()
+## BYO data, model, local explanation:
+?cheem::cheem_ls
 ```
-
 
 ---
 
@@ -596,13 +643,16 @@ knitr::include_graphics(
 # Acknowledgments
 
 <br><br>
-Thanks to Professor Przemyslaw Biecek for his time and input suggesting SHAP and FIFA, in addition to the __DALEX__ package ecosystem and _Exploratory Model Analysis_ book
+Thanks to Professor Przemyslaw Biecek for his guidance and input, in addition to the __DALEX__ package ecosystem and _Exploratory Model Analysis_ book
 
 <br>
 Thanks to Di Cook and Kim Marriott for their supervision
 
 <br>
-This research was supported by an Australian government Research Training Program (RTP) scholarship. These slides were in __R__ using __rmarkdown__ and __xaringan__ *(R Core Team, 2021; Xie et al. 2018; Xie, 2018)*
+This research was supported by an Australian government Research Training Program (RTP) scholarship. These slides created in __R__ using __rmarkdown__ and __xaringan__ *(R Core Team, 2021; Xie et al. 2018; Xie, 2018)*
+
+<br>
+_Tentatively,_ IFF may support continued development of related content; broader preprocessing functions, more/better geom-like displays
 
 ---
 background-size: cover
@@ -617,8 +667,8 @@ count: false
 .bottom_abs.width100[
 <br>
 *`r rmarkdown::metadata$author`* <br>
-`r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$email` <br>
+`r rmarkdown::metadata$affiliation` <br>
 `r rmarkdown::metadata$date` <br><br>
 Slides -- `r rmarkdown::metadata$slides_url`
 ]
